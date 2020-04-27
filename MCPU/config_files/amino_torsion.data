@@ -1,0 +1,105 @@
+DIR	/home/shimada/projects/protein_design/amino_acids/
+*
+!! amino -#heavy atoms- #torsions filename
+0  ALA 6  0 ALA.pdb A
+1  ARG 12 4 ARG.pdb R
+2  ASN 9  2 ASN.pdb N
+3  ASP 9  2 ASP.pdb D
+4  CYS 7  1 CYS.pdb C
+5  GLN 10 3 GLN.pdb Q
+6  GLU 10 3 GLU.pdb E
+7  GLY 5  0 GLY.pdb G
+8  HIS 11 2 HIS.pdb H
+9  ILE 9  2 ILE.pdb I
+10 LEU 9  2 LEU.pdb L
+11 LYS 10 4 LYS.pdb K
+12 MET 9  3 MET.pdb M
+13 PHE 12 2 PHE.pdb F
+14 PRO 8  2 PRO.pdb P
+15 SER 7  1 SER.pdb S
+16 THR 8  1 THR.pdb T
+17 TRP 15 2 TRP.pdb W
+18 TYR 13 2 TYR.pdb Y
+19 VAL 8  1 VAL.pdb V
+*
+!! amino torsion# 1 2 3 4 offset
+ARG 0 N   CA  CB  CG  0
+ARG 1 CA  CB  CG  CD  0
+ARG 2 CB  CG  CD  NE  0
+ARG 3 CG  CD  NE  CZ  0
+ASN 0 N   CA  CB  CG  0
+ASN 1 CA  CB  CG  OD1 0
+ASP 0 N   CA  CB  CG  0
+ASP 1 CA  CB  CG  OD1 0
+CYS 0 N   CA  CB  SG  0
+GLN 0 N   CA  CB  CG  0
+GLN 1 CA  CB  CG  CD  0
+GLN 2 CB  CG  CD  OE1 0
+GLU 0 N   CA  CB  CG  0
+GLU 1 CA  CB  CG  CD  0
+GLU 2 CB  CG  CD  OE1 0
+HIS 0 N   CA  CB  CG  0
+HIS 1 CA  CB  CG  ND1 0
+ILE 0 N   CA  CB  CG1 0
+ILE 1 CA  CB  CG1 CD1 0
+LEU 0 N   CA  CB  CG  0
+LEU 1 CA  CB  CG  CD1 0
+LYS 0 N   CA  CB  CG  0
+LYS 1 CA  CB  CG  CD  0
+LYS 2 CB  CG  CD  CE  0
+LYS 3 CG  CD  CE  NZ  0
+MET 0 N   CA  CB  CG  0
+MET 1 CA  CB  CG  SD  0
+MET 2 CB  CG  SD  CE  0
+PHE 0 N	  CA  CB  CG  0
+PHE 1 CA  CB  CG  CD1 0
+PRO 0 N   CA  CB  CG  0
+PRO 1 CA  CB  CG  CD  0
+SER 0 N   CA  CB  OG  0
+THR 0 N   CA  CB  OG1 0
+TRP 0 N   CA  CB  CG  0
+TRP 1 CA  CB  CG  CD1 0
+TYR 0 N   CA  CB  CG  0
+TYR 1 CA  CB  CG  CD2 0
+VAL 0 N   CA  CB  CG1 0
+*
+!! amino torsion# -#atoms affected by torsion- -all atoms affected-
+ARG 0 6  CG  CD  NE  CZ  NH1 NH2
+ARG 1 5  CD  NE  CZ  NH1 NH2
+ARG 2 4  NE  CZ  NH1 NH2
+ARG 3 3  CZ  NH1 NH2
+ASN 0 3  CG  OD1 ND2
+ASN 1 2  OD1 ND2
+ASP 0 3  CG  OD1 OD2
+ASP 1 2  OD1 OD2
+CYS 0 1  SG
+GLN 0 4  CG  CD  OE1 NE2
+GLN 1 3  CD  OE1 NE2
+GLN 2 2  OE1 NE2
+GLU 0 4  CG  CD  OE1 OE2
+GLU 1 3  CD  OE1 OE2
+GLU 2 2  OE1 OE2
+HIS 0 5  CG  ND1 CD2 CE1 NE2
+HIS 1 4  ND1 CD2 CE1 NE2
+ILE 0 3  CG1 CG2 CD1
+ILE 1 1  CD1
+LEU 0 3  CG  CD1 CD2
+LEU 1 2  CD1 CD2
+LYS 0 4  CG  CD  CE  NZ
+LYS 1 3  CD  CE  NZ
+LYS 2 2  CE  NZ
+LYS 3 1  NZ
+MET 0 3  CG  SD  CE
+MET 1 2  SD  CE
+MET 2 1  CE
+PHE 0 6  CG  CD1 CD2 CE1 CE2 CZ
+PHE 1 5  CD1 CD2 CE1 CE2 CZ
+PRO 0 2  CG  CD
+PRO 1 1  CD
+SER 0 1  OG
+THR 0 2  OG1 CG2
+TRP 0 9  CG  CD1 CD2 NE1 CE2 CE3 CZ2 CZ3 CH2
+TRP 1 8  CD1 CD2 NE1 CE2 CE3 CZ2 CZ3 CH2
+TYR 0 7  CG  CD1 CD2 CE1 CE2 CZ  OH
+TYR 1 6  CD1 CD2 CE1 CE2 CZ  OH
+VAL 0 2  CG1 CG2

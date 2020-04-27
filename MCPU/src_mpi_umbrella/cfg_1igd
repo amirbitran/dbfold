@@ -1,0 +1,94 @@
+!!
+!! NATIVE PROTEIN DATA
+!!
+NATIVE_FILE			/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/sim/1igd/files/1igd_0.200_20_Emin.pdb
+STRUCTURE_FILE  		/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/sim/1igd/files/1igd_0.200_20_Emin.pdb
+NATIVE_DIRECTORY		/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/sim/1igd/MultiUmbrella16
+TEMPLATE_FILE  			/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/sim/DHFR/files/nothing.template 
+ALIGNMENT_FILE  		1lfb	
+PDB_OUT_FILE			/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/sim/1igd/TEST/1igd
+PROTEIN_NAME			p1afvA
+!!
+!!
+!! POTENTIAL PARAMETERS
+!!
+NO_NEW_CLASHES			1
+READ_POTENTIAL 			1Lfb
+USE_GO_POTENTIAL		0
+CLASH_WEIGHT			0
+RMS_WEIGHT			0
+HYDROGEN_BOND			-2
+NATIVE_ATTRACTION		0
+NON_NATIVE_REPULSION		0
+NON_SPECIFIC_ENERGY 		0
+!!
+!! CONTACT DEFINITION
+!!
+SKIP_LOCAL_CONTACT_RANGE	4
+SKIP_BB_CONTACT_RANGE		1000
+!!
+!! MONTE-CARLO PARAMETERS
+!!
+!!
+MC_STEPS			300000000
+MC_ANNEAL_STEPS 		200000000000000
+MC_PDB_PRINT_STEPS		500000
+PRINT_PDB			1
+MC_PRINT_STEPS			500000
+!!
+!! Replica Exchange Parameter
+!!
+MC_REPLICA_STEPS                10000
+MAX_EXCHANGE                    75
+!!
+!! SIMULATION PARAMETERS
+!!
+MC_TEMP_MIN			0.4 
+TEMP_STEP			0.025
+NODES_PER_TEMP		5
+ALPHA				0.75
+LAMBDA				1.8
+MC_STEP_SIZE			2.0
+SIDECHAIN_MOVES			1
+SIDECHAIN_NOISE			10
+USE_GLOBAL_BB_MOVES		0
+YANG_MOVE                       0.5
+YANG_SCALE                      30
+USE_CLUSTER				0.0
+MAX_CLUSTERSTEP			0
+USE_SIDECHAINS			1
+USE_ROTAMERS			1
+USE_ROT_PROB			0
+SEQ_DEP_HB			1
+
+ 
+!!
+!!
+!! Umbrella parameters !!
+!!
+!!
+UMBRELLA						1
+K_BIAS							0.02
+NUMBER_OF_CONTACTS_MAX			40
+CONTACTS_STEP					10
+MIN_SEQ_SEP						8
+CONTACT_CALPHA_CUTOFF			6
+!!
+!! CONSTRAINT_RMSD is a new feature
+!!   MC simulation will not let RMSD exceed set value
+!!   A negative value means this feature is inactive
+CONSTRAINT_RMSD			-1
+!!
+!! PARAMETER FILES
+!!
+TRIPLET_ENERGY_FILE		/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/sim/1igd/files/1igd.triple
+SIDECHAIN_TORSION_FILE		/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/sim/1igd/files/1igd.sctorsion
+SECONDARY_STRUCTURE_FILE	/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/sim/1igd/files/1igd.sec_str
+!!
+AMINO_DATA_FILE			/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/config_files/amino_torsion.data
+ROTAMER_DATA_FILE		/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/config_files/bbind02.May.lib
+ATOM_TYPE_FILE  		/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/config_files/twenty_res_typing
+HELICITY_DATA			/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/config_files/T0130.seq
+HYDROGEN_BONDING_DATA		/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/config_files/hydrogen_jPL3h.data
+POTENTIAL_DATA 		        /n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/config_files/p178_conrange4_potential_0.995054
+AROMATIC_FILE			/n/shakfs1/users/amirbitran/ShakhnovichLab/MCPU/config_files/aromatic_noTYR.energy
