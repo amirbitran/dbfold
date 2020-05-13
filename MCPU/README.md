@@ -57,7 +57,7 @@ NOTE: It is important that the FASTA file have 80 characters per line
 Create <PDB_ID>.sec_str manually. File contains secondary structure assignment for each protein residue (see publication [1]).
 first line: use input secondary structure? (9/0 = yes/no)
 second line: secondary structure type (H/E/C = helix/sheet/coil)
-For most applications, the first line is entirely 0's (no input secondary structure) and the second line is set to entirely C's 
+For most applications, the first line is entirely 0's (no input secondary structure) and the second line is set to entirely C's. Note that if any secondary structure character is anything except C, then the value of USE_CLUSTER specified in the cfg file will be overwritten by a default value (see move.h). This may lead to the implementation of (detailed-balance violating) knowledge moves!  
 
 Place input files, along with the pdb file, in the directory sim/DHFR/files/
 (currently contains sample input files for DHFR)

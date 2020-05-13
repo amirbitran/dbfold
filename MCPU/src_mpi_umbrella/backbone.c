@@ -49,11 +49,8 @@ int main(int argc, char *argv[]) {
   if (CLUSTER_MOVE && USE_CLUSTER){
     fprintf(STATUS, "WARNING! KNOWLEDGE MOVES ARE IMPLEMENTED! THESE DO NOT SATISFY DETAILED BALANCE!  \n ");
   }
-  if (YANG_MOVE) {
-  	fprintf(STATUS, "WARNING! YANG (LOCAL) MOVES ARE CURRENTLY ON! ACCEPTANCE CRITERION NEEDS TO BE CORRECTED, OTHERWISE SIMULATION WILL NOT SATISFY DETAILED BALANCE \n ");
-  }
-  
-  fprintf(STATUS, "Note that if any secondary structure character is H, there's a chance that knowledge based moves (break detailed balance) are being implemented! \n");
+
+  fprintf(STATUS, "Note that if any secondary structure character is anything except C, then the value of USE_CLUSTER specified in the cfg file will be overwritten by a default value (see move.h). \n This may lead to the implementation of (detailed-balance violating) knowledge moves!  \n");
   
   fprintf(STATUS, "Starting configuration: %s\n", native_file);
   fprintf(STATUS, "Target configuration:   %s\n", structure_file);

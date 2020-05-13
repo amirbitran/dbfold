@@ -422,6 +422,62 @@ def get_unfolding_distribution(Bootstrapped_EAs, Bootstrapped_intercepts, temp, 
             
     return Log_unfolding_distribution    
 
+
+
+def get_unfolding_pathways(labels, PDB_files, temperatures='*', verbose=True, goal_state = -1):
+    """
+    What are all the unfolding pathways that are taken?
+    We ignore loops, so 0->1->2->1->3 becomes 0->1->3
+    Sorts unfolding pathways in order of decreasing flux through them.
+    Can choose to specify only one temperature, for instnace, '0.925_', (that underscore is important) or a list of them
+    
+    We only keep pathways that reach a desired unfolded state
+    By default, this is the fully unfodled state, and so we indicate this with goal_state = -1
+    But if you care about pathways that reach some other state, just specify this other state with goal_state keyword
+    """
+    
+    PDB_files, labels=utils.get_trajectory(labels, PDB_files, temperatures)
+    
+    times=np.array(utils.get_times(PDB_files))
+    zero_times=np.where(times==0)[0]
+    pathways=[]
+    for n, t in enumerate(zero_times[:-1]):
+        traj=labels[t:zero_times[n+1]]
+        pathway=[]
+        for s,p in enumerate(traj):
+            if s==0: #always include the initial time
+                pathway.append(p)
+            else:
+                if p!=traj[s-1]: #a change has occured in trajectory
+                    if p in pathway:
+                        ind = pathway.index(p)
+                        pathway=pathway[0:ind+1]
+                    else:
+                        pathway.append(p)
+                
+        if goal_state ==-1 and p==np.max(labels):
+            pathways.append(pathway)
+        elif goal_state in pathway:
+            pathways.append(pathway)  #only keep track of pathways that fully unfold
+            
+    unique_pathways=[]
+    fracs=[]  #what fraction of flux goes through each unique pathway?
+    for p in pathways:
+        if p not in unique_pathways:
+            unique_pathways.append(p)
+            fracs.append(len([P for P in pathways if P==p])/len(pathways))
+    #sort in order of decreasing flux
+    order=np.argsort(-np.array(fracs))
+    fracs=np.array(fracs)[order]
+    unique_pathways=[unique_pathways[o] for o in order]    
+
+    if verbose:
+        print ('Pathway \t \t fraction of flux')
+        for p, path in enumerate(unique_pathways):
+            if fracs[p]>=0.01: print('{} \t \t {} \n'.format(path, np.round(fracs[p], 3)))
+    return pathways, unique_pathways, fracs 
+
+
 def get_unfolding_transitions(labels, PDB_files, temp='*', verbose=True, min_to_show=0):
     """
     FInds unfolding transitions (ex. (0,1)) and ranks by abundance

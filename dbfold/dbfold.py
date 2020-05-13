@@ -84,6 +84,10 @@ class Protein():
         self.folded_state = folded_state
         if savepath != None:
             joblib.dump([substructures, native_distances, d_cutoff, min_seq_separation], '{}'.format(savepath))
+    def get_CA_coords(self):
+        coords, resis = analyze_structures.read_PDB(self.native_structure, 'CA')
+        return coords
+        
         
     def obtain_folding_rates(self, Arrhenius_temps = [], unfolding_transitions_of_interest = [], N_trials=1000, min_trans = 5, overwrite = False ):
         """
@@ -234,7 +238,6 @@ class Protein():
         
     def update_folding_rates(self, Arrhenius_temps, unfolding_transitions_of_interest,clusters_to_replace, N_trials=1000, min_trans = 5 ):
         """
-        IN PROGRESS!
         Does a new folding rate calculation using the currently stored in tedmp_unfolding_info, assuming some folding rates had already been computed
         In general, the cluster numbering, and the identity of the clusters, may be different in this new unfolding info
         Thus, we must replace the old info with this new one
