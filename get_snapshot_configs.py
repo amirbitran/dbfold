@@ -89,6 +89,7 @@ else:
     print('Identifying substructures de novo!')
     native_contacts, native_substructures=dbfold.analyze_structures.identify_native_substructures(native_file, d_cutoff, min_seq_separation, contact_sep_thresh, min_clustersize, plot=False )
     native_distances=dbfold.analyze_structures.find_native_contacts(native_file, d_cutoff, min_seq_separation, mode = 'distances')
+    print('{} snapshots identified!'.format(np.shape(native_substructures)[2]))
 
 
 
