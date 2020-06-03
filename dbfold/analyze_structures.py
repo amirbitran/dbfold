@@ -68,7 +68,7 @@ def count_contacts(native_file, d_cutoff, min_seq_separation):
 
 
 
-def create_substructure_PML(PDB_path, subs_to_plot, d_cutoff, min_clustersize, contact_sep_thresh, substructures = [], colours = []):
+def create_substructure_PML(PDB_path, subs_to_plot, d_cutoff, min_clustersize, contact_sep_thresh,min_seq_separation=8, substructures = [], colours = []):
     """
     Identifies substructures, then creates a pymol .pml script that draws those substructures as colored contacts directly on the pymol
     
@@ -86,8 +86,7 @@ def create_substructure_PML(PDB_path, subs_to_plot, d_cutoff, min_clustersize, c
     alphabet = 'abcdefghijklmnopqrstuvwxyz'
     
     if len(substructures)==0:
-        native_contacts, substructures = identify_native_substructures(PDB_path, d_cutoff=d_cutoff, plot=False,
-                                                               min_clustersize=min_clustersize, contact_sep_thresh=contact_sep_thresh)
+        native_contacts, substructures = identify_native_substructures(PDB_path, d_cutoff, min_seq_separation, contact_sep_thresh, min_clustersize, plot=False)
     
     prefix = PDB_path.split('pdb')[0]
     PML_path = '{}pml'.format(prefix)
@@ -226,6 +225,11 @@ def PDB_contacts_matrix(PDB_file, thresh=7.8, min_seq_separation=8, plot = True,
         plt.title(PDB_file)
     
     return contacts
+
+
+
+
+
 
 
 def read_PDB(file, atom):

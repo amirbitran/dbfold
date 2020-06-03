@@ -290,7 +290,7 @@ def plot_pfold_vs_length(protein, directories, fileroots, lengths, subs, temp, f
 
 
 
-def plot_substructure_PMF(path, temps_to_plot, legend = True, legend_loc=None, upper_cutoff=25, integrate_out = [],states_to_plot = 'All' , linewidth = 1.3, alpha = 0.4,legend_fontsize = 40, ax = None, y_space=0.5, labelsize = 35,fontsize=30, markersize = 120, temp_norm = 1):
+def plot_substructure_PMF(path, temps_to_plot, legend = True, legend_loc=None, upper_cutoff=25, integrate_out = [],states_to_plot = 'All' , linewidth = 1.3, alpha = 0.4,legend_fontsize = 40, ax = None, y_space=0.5, labelsize = 35,fontsize=30, label_fontsize=20, markersize = 120, temp_norm = 1):
     """
     path indicates where the PMFs that you want to plot are located...for instance 'ADK_umbrella_multistart/Substructure_PMF.dat'
     We do not plot any free eneriges with value higher than upper_cutoff
@@ -381,7 +381,7 @@ def plot_substructure_PMF(path, temps_to_plot, legend = True, legend_loc=None, u
                 a=x_to_plot[i]  
                 
                 #if N==0: str_to_plot='$\emptyset$'
-                ax.annotate(x_to_plot[i], xy=(N+0.1, y), fontsize=fontsize )
+                ax.annotate(x_to_plot[i], xy=(N+0.1, y), fontsize=label_fontsize )
 
                 
                 #draw line between configurations if they differ by one substructure

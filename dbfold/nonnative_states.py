@@ -98,6 +98,75 @@ def cluster_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_separ
     
     return clustered_PDBs, [p for c,p in enumerate(percentages) ], mean_maps
 
+
+def nonnative_substructures(nonnatives_path, native_file, d_cutoff=6.5, filter_distance = 2, min_clustersize=7, contact_sep_thresh = 5,min_frac=0.1, min_seq_separation=8, contact_maps=[]):
+    """
+    Obtains nonnative contact map, filters out nonnative contacts that are simply register-shifted natives, 
+    keeps those nonnative contacts that are present at least min_frac of the time, then smudges them by an amount filter_distance,
+    to allow for register shifts in those nonnative contacts
+    
+    From that resulting map, identifies substructures
+    
+    Can also input the nonnative conatcts map by default, and in that case you set nonnatives_path to NOne
+    """
+    native_contacts, substructures = analyze_structures.identify_native_substructures(native_file, d_cutoff, min_seq_separation, contact_sep_thresh, min_clustersize, plot=False)
+    
+    
+
+    if nonnatives_path!=None:
+        [contact_maps, PDB_files, filescores]=joblib.load(nonnatives_path)
+        if np.shape(contact_maps)[2]>len(PDB_files):  #there is an extra page attached to end of the distance maps that tells you mean distances between residues
+            mean_distances = contact_maps[:,:,-1]
+            contact_maps = contact_maps[:, :, 0:-1]
+    N=np.shape(contact_maps)[2]    
+    nn=np.shape(contact_maps)[0]
+        
+    Filter=cp.deepcopy(native_contacts)
+    for d in range(-filter_distance, filter_distance+1):  #gets rid of register-shifted native contacts
+        im1_to_add=np.roll(native_contacts, d, axis=1)
+        if d<0:
+            im1_to_add[:, d:]=0
+        else:
+            im1_to_add[:, 0:d]=0
+        
+        im2_to_add=np.roll(native_contacts, d, axis=0)
+        if d<0:
+            im2_to_add[d:,:]=0
+        else:
+            im2_to_add[0:d, :]=0
+        Filter=Filter+im1_to_add + im2_to_add
+        Filter[np.where(Filter)]=1
+        
+    x=np.mean(np.multiply(contact_maps, 1-np.repeat(Filter[:,:,np.newaxis], N, axis=2)), axis = 2)
+    c = np.zeros(np.shape(x))
+    c[np.where(x>=min_frac)] = 1
+
+    Filter2=cp.deepcopy(c)  #we want to also count contacts from replica simulation taht may be register shifted
+    for d in range(-filter_distance, filter_distance+1):  
+        im1_to_add=np.roll(c, d, axis=1)
+        if d<0:
+            im1_to_add[:, d:]=0
+        else:
+            im1_to_add[:, 0:d]=0
+        
+        im2_to_add=np.roll(c, d, axis=0)
+        if d<0:
+            im2_to_add[d:,:]=0
+        else:
+            im2_to_add[0:d, :]=0
+        Filter2=Filter2+im1_to_add + im2_to_add
+        Filter2[np.where(Filter2)]=1    
+    
+    nonnative_contacts = Filter2
+    unused, substructures = analyze_structures.identify_native_substructures(None,  d_cutoff, min_seq_separation, contact_sep_thresh, min_clustersize, plot=True,  native_contacts=nonnative_contacts, verbose=False)
+    
+    #mean_distances[np.where(nonnative_contacts==0)]=0  #only keep the mean distances for the contacts we care about
+    
+    return substructures, mean_distances
+
+
+
+
 def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_separation = 8, cmap='Greys', Return = False, cbar = True, filter_natives = True, filter_distance = 2, vmax = 1, alpha = 1,custom_filter = None, ax=None, labelsize = 40):
     """
     Reads a file of the form Distance_maps.dat and makes a contact map of nonnative contacts with shading according to frequency with whcih 

@@ -267,6 +267,18 @@ class Protein():
         new cluster 0'
         Likewise for 2 and 3, whoes states would be replaced by those in 1' and 2', respectively
         
+        
+        
+        **It is important that every unique number in unfolding_transitions_of_interest (0,1, and 2 in this case) 
+        have a corresponding entry in clusters_to_replace **
+        
+        **Note that you are also able to add new clusters that have no analog in the initial simulation. For instnace,
+        suppose that you run a new simulation which samples some state , cluster 0'' given by
+        [001100] which is not observed in the initial trajectory indexed by unprimed numbers
+        You can add this cluster to your initial list as cluster 5 by including
+        0:5 in clusters_to_replace **
+        
+        
         We then update the corresponding unfolding parameters
         We then compute the new free energies of ALL clusters
         
@@ -278,6 +290,9 @@ class Protein():
         in this case the 1->0 transition, in the old numbering) would change, by virtue of the fact
         that the definition of cluster 1 has changed...previously it was [111110,101110],
         now it is [111110], which may have a different free energy than [111110,101110]
+        
+        **Note, for now, the number of bootstrapped trials during this update should not exceed 
+        the number that was done initially ***
 
         """
 
@@ -296,15 +311,11 @@ class Protein():
                                                                                                                                         legend_loc='upper right', Ntrials=N_trials, 
                                                                                                                                         min_trans= min_trans)    
         
-        
-        
         EAs = self.folding_info['activation energies']
         prefactors = self.folding_info['prefactors']
         Bootstrapped_EAs = self.folding_info['Bootstrapped EAs']
         Bootstrapped_intercepts = self.folding_info['Bootstrapped intercepts']
         clusters = self.folding_info['clusters']
-        
-
         
         for nn, trans in enumerate(unfolding_transitions_of_interest):
             i = trans[0]
@@ -313,17 +324,52 @@ class Protein():
             ii = clusters_to_replace[i]
             jj = clusters_to_replace[j]
             
+            #if ii not in self.folding_info['clusters_dic'].keys():
+            
+            maxim = np.max([ii,jj])
+            
+            #In case we are introducing a new cluster for which no analog was not observed in the original unfolding simulations
+            Nclusters=len(clusters)
+            
+            if maxim>Nclusters-1:
+                
+                bottom_block=np.zeros((maxim+1-Nclusters,Nclusters))
+                right_block=np.zeros((maxim+1,maxim+1-Nclusters))
+                
+                orig_N_trials=np.shape(Bootstrapped_EAs)[2]
+                bottom_chunk=np.repeat(bottom_block[:,:,np.newaxis],orig_N_trials,axis=2)
+                right_chunk=np.repeat(right_block[:,:,np.newaxis],orig_N_trials,axis=2)
+                
+                
+                EAs=np.concatenate((EAs, bottom_block),0)
+                EAs=np.concatenate((EAs, right_block),1)
+                
+                prefactors=np.concatenate((prefactors, bottom_block),0)
+                prefactors=np.concatenate((prefactors, right_block),1)
+                
+                Bootstrapped_EAs=np.concatenate((Bootstrapped_EAs, bottom_chunk),0)
+                Bootstrapped_EAs=np.concatenate((Bootstrapped_EAs, right_chunk),1)
+                
+                Bootstrapped_intercepts=np.concatenate((Bootstrapped_intercepts, bottom_chunk),0)
+                Bootstrapped_intercepts=np.concatenate((Bootstrapped_intercepts, right_chunk),1)
+                            
+                while maxim>len(clusters)-1:
+                    clusters.append([])
+
+            
             EAs[ii,jj]=activation_energies_update[i,j]
             prefactors[ii,jj] = prefactors_update[i,j]
             Bootstrapped_EAs[ii,jj,0:N_trials]=Bootstrapped_EAs_update[i,j,:]
             Bootstrapped_EAs[ii,jj,N_trials:]=np.nan
             Bootstrapped_intercepts[ii,jj, 0:N_trials] = Bootstrapped_intercepts_update[i,j,:]
             Bootstrapped_intercepts[ii,jj,N_trials:]=np.nan
-            
-            
+
             clusters[ii] = clusters_update[i]
-            if nn==len(trans):
-                clusters[jj]=clusters_update[j]
+            clusters[jj] = clusters_update[j]
+            
+            #Was present in previous version:
+            #if nn==len(trans): #I think this shoudl be if nn == len(unfolding_transitions_of_interest)? I'm confused what I meant here, since len(trans)=2 always. WHat's special about 2?
+            #    clusters[jj]=clusters_update[j] #I think I was thinking too narrow mindedly and assuming every case would be like the hypothetical example above, in which case we only NEED to update the j for the last transition, since the transitions we care to update are sequential
             
         
         G=compute_PMF.cluster_free_energies( clusters, tops, top_free_energies, eq_temperatures)

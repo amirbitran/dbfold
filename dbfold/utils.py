@@ -117,6 +117,29 @@ def histogram(labels, key):
     a=plt.hist(labels, bins=len(key)-1)
 
 
+def lookup_files(label,labels, PDB_files, traj='All'):
+    """
+    returns all files that are assigned to a given label   
+    You can use traj to specify that you only care about files in a given trajectory
+    The defalt is 'All' (all trajectories are considered )
+    """
+    files=[f for n,f in enumerate(PDB_files) if labels[n]==label ]
+    if traj!='All':
+         files = [f for f in files if fnmatch.fnmatch( f, '*_{}*'.format(traj))]
+    return files
+
+
+def lookup_labels(file, PDB_files, labels, verbose = True):
+    """
+    returns the label for a given file or set of files
+    file is a string that is contained within a single file, or a set of files
+    (ex. '720.199000', or '0.850_15')
+    """
+    indices=[f for f in range(len(PDB_files)) if fnmatch.fnmatch( PDB_files[f], '*{}*'.format(file)) ]
+    for index in indices:
+        if verbose: print("{}: {} \n".format(PDB_files[index], labels[index]))
+    return labels[indices[0]]       
+
 def loopCluster(thresh, files, d_contacts, sort_orphans=False, min_clustersize=1, verbose=True):
     """
     Only keep clusters min_clustersize elements or more 
