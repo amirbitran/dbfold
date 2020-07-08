@@ -473,7 +473,7 @@ double hamming_distance_calpha_contacts (const struct residue *residues, const s
 
 
 
-//AB
+//AB--I don't think this works
 void Read_substructures(const char *substructure_path,  short **substructures)
 {
 	/*

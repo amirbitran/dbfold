@@ -12,6 +12,46 @@ import numpy as np
 
 
 
+def combine_scores(path1, path2):
+    """
+    Loads unfolding score data in path1 and path2, and combines them into a single file by offsetting the trajectory nubmers in path2,
+    then resaves as path1
+    """
+    Scores1,  PDB_files1, native_contacts, substructures= joblib.load(path1)
+    Scores2,  PDB_files2, native_contacts, substructures= joblib.load(path2)
+    
+    
+    traj_nums=[]  #x. file 'MARR/unfolding3/marr_1.000_399.99500000' will b given traj_num = 399 
+    for f in PDB_files1:
+        fields=f.split('_')
+        traj_num=int(fields[-1].split('.')[0])
+        traj_nums.append(traj_num)
+        
+    offset=np.max(traj_nums)+1  #to every traj number in PDB_files2, we add this value
+    
+    for i, F in enumerate(PDB_files2):
+        fields=F.split('_')
+        
+        traj_num, time = fields[-1].split('.')
+        traj_num=int(traj_num)+offset
+        time=int(time)
+        
+        
+        newstring=fields[0]
+        for field in fields[1:-1]:
+            newstring='{}_{}'.format(newstring, field)
+        newstring='{}_{}.{}'.format(newstring, traj_num, time)
+        PDB_files2[i]=newstring
+    
+    
+    Scores=np.vstack((Scores1, Scores2))
+    PDB_files=PDB_files1+PDB_files2
+    #N_nonnative_substructures= np.hstack((N_nonnative_substructures1, N_nonnative_substructures2))
+    
+    joblib.dump([Scores, PDB_files, native_contacts, substructures], path1, compress=3 )
+    
+
+
 def get_times(files):
     times=[]
     for file in files:

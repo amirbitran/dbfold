@@ -38,6 +38,7 @@ void Fold(void) {
   float E_sct_now = 0.0;
   float E_aro_now = 0.0;
   float E_hbond_now = 0.0;
+  float E_constraint_now = 0.0; //AB
 
   /* rmsd by jyang */
 
@@ -106,7 +107,7 @@ void Fold(void) {
   }
   native_rms = getrms(struct_f1, struct_f2, align);
 
-  ResetEnergies(0);
+  ResetEnergies(0); //Here we actually fill in the values for prev_E (which are, ironically, the current energies, but these will indeed become previous once a move is made)
   rms_RMSDmin = 100.;
   mcstep_RMSDmin = 0;
   mcstep_Emin = 0;
@@ -116,6 +117,7 @@ void Fold(void) {
   Emin_tor = prev_E_tor;
   Emin_sct = prev_E_sct;
   Emin_aro = prev_E_aro;
+  Emin_constraint = prev_E_constraint;
   fprintf(STATUS, "ENERGY = %.2f(clashes) + %.2f(rmsd) + %.2f(potential) + %.2f(Aro) + %.2f(hbond) + %.2f(tor) + %.2f(sct)\n\n",
     weight_clash, weight_rms, weight_potential, ARO_WEIGHT, weight_hbond, TOR_WEIGHT, SCT_WEIGHT);
   for (i=0; i<natoms; i++) {
@@ -131,7 +133,7 @@ void Fold(void) {
   n_sidechain_accepted = 0;
 
   natives=number_of_calpha_native_contacts (native_residue, native, orig_contactstring);  
-  fprintf(STATUS, "         step #    energy contact rmsd   natives potnl    sctor      hbond       Aro   torsion accept reject others   temp setpoint\n---------------------------------------------------------------------------------------------\n");
+  fprintf(STATUS, "         step #    energy contact rmsd   natives potnl    sctor      hbond       Aro   torsion accept reject others   temp setpoint E_constraint weighted_mean_constraint_distance\n---------------------------------------------------------------------------------------------\n");
 
 
   /* main folding loop */
@@ -256,7 +258,7 @@ void Fold(void) {
           }
         }
 
-        if (replica_index[myrank] != myrank) { //if exchange occurred, transfer temporary data to real-deal atomic data structure
+        if (replica_index[myrank] != myrank) { //if exchange occurred, transfer temporary data to real-deal atomic data structure, and recompute energies with the updated atomic info
           for (i=0; i<natoms; i++) {
             native[i].xyz.x = buf_in[3*i];
             native[i].xyz.y = buf_in[3*i+1];
@@ -275,7 +277,7 @@ void Fold(void) {
       Contacts();
       if (!mc_flags.init)
 	TurnOffNativeClashes(0);
-      ResetEnergies(0);
+      ResetEnergies(0); //Recompute energies
       GetChi();
     
     natives= number_of_calpha_native_contacts (native_residue, native, orig_contactstring);
@@ -315,14 +317,24 @@ void Fold(void) {
       E_tor_now = torsionenergy();
       E_aro_now = aromaticenergy();
       E_hbond_now = HydrogenBonds();
-      fprintf(STATUS,"STEP %10ld  %8.2f %6d %5.2f %d %9.2f %9.2f %9.2f    %6.2f %8.2f %6.2f %6.2f %6.2f %6.3f, %d\n", 
+      
+        	 if (strcmp(constraint_file, "None")!=0 ){ //AB
+ 	 E_constraint_now =  Compute_constraint_energy (native_residue, native); //AB
+  		}	else { //AB
+ 	 E_constraint_now =0; //AB
+   } //AB
+
+      
+      
+      
+     fprintf(STATUS,"STEP %10ld  %8.2f %6d %5.2f %d %9.2f %9.2f %9.2f    %6.2f %8.2f %6.2f %6.2f %6.2f %6.3f, %d %6.3f %6.3f \n", 
 	      mcstep, E, ncontacts, native_rms,
 	      natives,
 	      E_pot_now, E_sct_now, E_hbond_now, E_aro_now, E_tor_now,
 	      100*(Float)naccepted/(Float)MC_PRINT_STEPS,
 	      100*(Float)nrejected/(Float)MC_PRINT_STEPS,
 	      100*(Float)nothers/(Float)MC_PRINT_STEPS,
-	      MC_TEMP, number_of_contacts_setpoint); 
+	      MC_TEMP, number_of_contacts_setpoint, E_constraint_now, mean_constraint_distance); 
       fflush(STATUS);
       n_sidechain_accepted = 0;
       naccepted = 0;
@@ -361,6 +373,7 @@ void Fold(void) {
       Emin_hbond = E_hbond;
       Emin_tor = E_tor;
       Emin_aro = E_aro;
+      Emin_constraint = E_constraint; //AB
       rms_Emin = native_rms;
       for (i=0; i<natoms; i++)
 	native_Emin[i] = native[i];
@@ -375,6 +388,7 @@ void Fold(void) {
       E_RMSDmin_tor = E_tor;
       E_RMSDmin_sct = E_sct;
       E_RMSDmin_aro = E_aro;
+      E_RMSDmin_constraint = E_constraint; //AB
       for (i=0; i<natoms; i++)
 	native_RMSDmin[i] = native[i];
     }
@@ -385,16 +399,16 @@ void Fold(void) {
   sprintf(temp_filename, "%s_Emin.pdb", pdb_out_file);
   PrintPDB_Emin(temp_filename);
   fprintf(STATUS, "\nMC step at Emin: %10ld\n", mcstep_Emin);
-  fprintf(STATUS, "Emin:%8.2f  Emin_pot:%8.2f  E_hb:%7.2f  E_tor:%7.2f  E_sct:%7.2f E_aro:%7.2f ",
-          Emin, Emin_pot,  Emin_hbond, Emin_tor, Emin_sct, Emin_aro);
+  fprintf(STATUS, "Emin:%8.2f  Emin_pot:%8.2f  E_hb:%7.2f  E_tor:%7.2f  E_sct:%7.2f E_aro:%7.2f E_constraint:%7.2f \n",
+          Emin, Emin_pot,  Emin_hbond, Emin_tor, Emin_sct, Emin_aro, Emin_constraint);
   fprintf(STATUS, "rmsd at Emin:%8.2f  ", rms_Emin);
   fprintf(STATUS, "Pdb file at Emin: %s\n", temp_filename);
 
   sprintf(rmsd_filename, "%s_RMSDmin.pdb", pdb_out_file);
   PrintPDB_RMSDmin(rmsd_filename);
   fprintf(STATUS, "\nMC step at RMSDmin: %10ld\n", mcstep_RMSDmin);
-  fprintf(STATUS, "rms_Rmin:%8.2f  E_RMSDmin:%8.2f E_Rmin_pot:%8.2f E_Rhb:%8.2f E_Rtor:%8.2f E_Rsct:%8.2f E_Raro:%8.2f\n",
-         rms_RMSDmin, E_RMSDmin, E_RMSDmin_pot, E_RMSDmin_hbond, E_RMSDmin_tor, E_RMSDmin_sct, E_RMSDmin_aro);
+  fprintf(STATUS, "rms_Rmin:%8.2f  E_RMSDmin:%8.2f E_Rmin_pot:%8.2f E_Rhb:%8.2f E_Rtor:%8.2f E_Rsct:%8.2f E_Raro:%8.2f E_Rconstraint:%8.2f \n",
+         rms_RMSDmin, E_RMSDmin, E_RMSDmin_pot, E_RMSDmin_hbond, E_RMSDmin_tor, E_RMSDmin_sct, E_RMSDmin_aro, E_RMSDmin_constraint);
   fprintf(STATUS, "Pdb file at RMSDmin: %s\n", rmsd_filename);
   
   

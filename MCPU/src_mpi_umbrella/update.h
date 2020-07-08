@@ -1,7 +1,12 @@
 void Restore();
 void Update();
 
-void Update() {
+void Update() {  /* This function is called AFTER a move has been made. Counterintuitively, the 
+values for prev_E are set as the CURRETNT values of the energy. But that's because we make another move before
+this function is called again, and so after that other move is made, the prev_E valious really are previous
+
+On the first step of the simulation, the function Reset_energies is used to compute the initial energy, and the values for prev_E are set to that initial energy
+*/
   int i, j, k, temp1;
   short M, N, temp;
 
@@ -58,6 +63,7 @@ void Update() {
   E_sct += dE_sct;
   E_aro += dE_aro;
   E_hbond += dE_hbond;
+  E_constraint+=dE_constraint;
   E += dE;
   prev_E = E;
   prev_E_pot = E_pot;
@@ -65,6 +71,7 @@ void Update() {
   prev_E_sct = E_sct;
   prev_E_aro = E_aro;
   prev_E_hbond = E_hbond;
+  prev_E_constraint = E_constraint;
   //fprintf(stdout, "Update : dE_sct : %.5f, E :%.5f, dE : %.5f, prev_E : %.5f\n", dE_sct, E, dE, prev_E);
   //fprintf(stdout, "%9.5f %9.5f\n", E, dE);
 
@@ -166,6 +173,7 @@ void Restore() {
   E_sct = prev_E_sct;
   E_aro = prev_E_aro;
   E_hbond = prev_E_hbond;
+  E_constraint = prev_E_constraint;
 
   return;
 }

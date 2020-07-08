@@ -9,6 +9,7 @@ Float rot_mat[3][3];            /* this is used in vector.h
 #include "mpi.h"
 #include "getrms.h"             /* getrms.h was moved up from includes at the bottom because it provides struct backbone */
 
+
 /* global dummy variables */
 FILE *DATA, *DATA_OUT, *STATUS;
 
@@ -53,6 +54,22 @@ struct contact_data {
   int delta_closehb;
 } **data, **struct_data;
 
+
+
+
+
+/* Constraint variables--by AB!!! */
+int Max_N_constraints = 1000;
+int N_constraints;
+int **constraint_array; //We will declare a pointer to an array of Max_N_constraints pointers to ints...the ** indicates pointer to a pointer
+float *constraint_weights; //A pointer to an array
+char constraint_file[500] = "None";
+float k_constraint=0;
+float E_constraint;
+float prev_E_constraint;
+float dE_constraint;
+//float E_constraint_now;
+float mean_constraint_distance = 0; 
 
 /* hydrogen bonding */
 struct hydrogen_bond {
@@ -246,8 +263,8 @@ char aromatic_file[500];
 long int mcstep, mcstep_Emin, mcstep_RMSDmin;
 int sidechain_step;
 int *cur_rotamers, old_rotamer;
-Float low_E, prev_E, E, native_E, Emin, Emin_pot, Emin_hbond, Emin_tor, Emin_sct, Emin_aro;
-float E_RMSDmin_pot, E_RMSDmin_hbond, E_RMSDmin_tor, E_RMSDmin_sct, E_RMSDmin_aro;
+Float low_E, prev_E, E, native_E, Emin, Emin_pot, Emin_hbond, Emin_tor, Emin_sct, Emin_aro, Emin_constraint;
+float E_RMSDmin_pot, E_RMSDmin_hbond, E_RMSDmin_tor, E_RMSDmin_sct, E_RMSDmin_aro, E_RMSDmin_constraint;
 float E_RMSDmin;
 Float dE, dE_pot, prev_E_pot, E_pot;
 int naccepted, n_sidechain_accepted;
@@ -309,7 +326,12 @@ float USE_CLUSTER = 0.0;       // 0.0 to turn knowledge based moves off, was 0.1
 int MAX_CLUSTERSTEP = 0;  //Added by AB...all MC steps after this will always have USE_CLUSTER set to 0
 
 
+
+/*Added by AB to allow myrank to be offset, for instnace when running multi-core unfolding simulations without MPI...by default, it is not*/
+int my_rank_offset=0;
+
 /* includes */
+#include "constraint.h" /*AB on 11/26/19*/
 #include "protein_util.h"
 #include "lattice_util.h"
 #include "tripep_closure.h"

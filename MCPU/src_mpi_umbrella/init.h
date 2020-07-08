@@ -1388,6 +1388,12 @@ void SetProgramOptions(int argc, char *argv[]) {
 	NON_SPECIFIC_ENERGY = value;         
       else if (!strcmp(token, "USE_GLOBAL_BB_MOVES"))
 	USE_GLOBAL_BB_MOVES = value;
+	  else if (!strcmp(token, "CONSTRAINT_FILE")){ //AB
+	sscanf(line, "%*s %s", name);
+	strcpy(constraint_file, name);
+	}
+	  else if (!strcmp(token, "K_CONSTRAINT")) //AB
+	k_constraint = value;
       else if (!strcmp(token, "YANG_MOVE"))
        {
 	YANG_MOVE = value;
@@ -1401,7 +1407,9 @@ void SetProgramOptions(int argc, char *argv[]) {
       else if (!strcmp(token, "SKIP_LOCAL_CONTACT_RANGE"))
 	SKIP_LOCAL_CONTACT_RANGE = (int) value;      
       else if (!strcmp(token, "SKIP_BB_CONTACT_RANGE"))
-        SKIP_BB_CONTACT_RANGE = (int) value;      
+        SKIP_BB_CONTACT_RANGE = (int) value;  
+      else if  (!strcmp(token, "MY_RANK_OFFSET"))
+      	my_rank_offset = (int) value;
       else if (!strcmp(token, "USE_SIDECHAINS"))
         USE_SIDECHAINS = (int) value;      
       else if (!strcmp(token, "NO_NEW_CLASHES"))
@@ -1448,8 +1456,11 @@ void SetProgramOptions(int argc, char *argv[]) {
 	The files in the native directory need to be in the form my_rank.pdb/
 	*/
   
+  //int mod_rank=(myrank+my_rank_offset) % NODES_PER_TEMP;
+  //char temp1[500];
+  
   if (strcmp(native_directory, "None")!=0) {
-  	sprintf(native_file, "%s/%d.pdb", native_directory, myrank);
+  	sprintf(native_file, "%s/%d.pdb", native_directory, myrank+my_rank_offset);
   	//printf("%s", native_directory);
   	
   	/*
@@ -1458,10 +1469,13 @@ void SetProgramOptions(int argc, char *argv[]) {
   	
   	So if nodes_per_temp=10, then cores 0, 10, 20, etc will all use 0.pdb
   	*/
+
   	FILE *test_file;
   	if ((test_file = fopen(native_file, "r"))==NULL) {  
-  		int mod_rank = myrank % NODES_PER_TEMP;
+  		int mod_rank = (myrank+my_rank_offset) % NODES_PER_TEMP;
+  		//printf("The current value of mod_rank is %i", mod_rank);
   		sprintf(native_file, "%s/%d.pdb", native_directory, mod_rank);
+  		//printf("The current value of native_file is %s", native_file);
   		
   	}
   }
@@ -1527,9 +1541,10 @@ void SetProgramOptions(int argc, char *argv[]) {
     }
   }
   
-  MC_TEMP=Tnode[myrank];
-  number_of_contacts_setpoint=Cnode[myrank];
-  
+
+  MC_TEMP=Tnode[myrank];   //temperature must always be externally modified if we want ot change the my_rank_offset
+  number_of_contacts_setpoint=Cnode[myrank]; ///same with setpoint
+
 
   /* SET name of PDB and log file  */
   
@@ -1539,19 +1554,23 @@ void SetProgramOptions(int argc, char *argv[]) {
   	}
   else {
   	k_bias=0;  //regardless of what we had inputted for k_bias, if umbrella is off, we don't want any bias!!
-  	if (NODES_PER_TEMP==1){
+  	if (NODES_PER_TEMP==1 && my_rank_offset==0){
   		sprintf(std_file, "%s_T_%5.3f.log", std_prefix, MC_TEMP);
   		sprintf(pdb_out_file+ls, "_%5.3f", MC_TEMP);
   	}
   	else {
-  		sprintf(std_file,"%s_T_%5.3f_%d.log",std_prefix, MC_TEMP, myrank);
-  		sprintf(pdb_out_file+ls,"_%5.3f_%d", MC_TEMP, myrank);
+  		sprintf(std_file,"%s_T_%5.3f_%d.log",std_prefix, MC_TEMP, myrank+my_rank_offset);
+  		sprintf(pdb_out_file+ls,"_%5.3f_%d", MC_TEMP, myrank+my_rank_offset);
   	}
   }
 
   /* OPEN log file  for business*/
   /*sprintf(std_file, "%s_%5.3f.log", std_prefix, MC_TEMP);*/
   STATUS = fopen(std_file, "w");	/* for some reason, code gives file handle the name STATUS */
+  //fprintf(STATUS,"The value of temp1 is %s and the value of mod_rank is %i", temp1, mod_rank);
+  //fflush(STATUS);
+  
+  
 
 
 
@@ -1609,6 +1628,15 @@ void SetProgramOptions(int argc, char *argv[]) {
   MATRIX_SIZE = 20;
   HALF_MATRIX_SIZE = MATRIX_SIZE/2;
 
+
+	/*Read the constraints--AB*/
+   if (strcmp(constraint_file, "None")!=0 ){
+   fprintf(STATUS, "There are constraints to read!\n");
+   fflush(STATUS);
+   Read_constraints();
+   fprintf(STATUS, "Constraints read\n");
+   fflush(STATUS);
+   }
 
   return;
 

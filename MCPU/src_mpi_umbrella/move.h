@@ -126,7 +126,7 @@ void MakeMove(Float step_size, Float use_global_bb_moves) {
 	for (i=0; i<total_pairs2; i++) 
 	  delta_nclashes += data[cd[i].a][cd[i].b].delta_clashes - data[cd[i].a][cd[i].b].clashes;
 
-      dE = 0; dE_pot = 0; dE_hbond = 0; dE_tor = 0; dE_aro = 0; dE_sct = 0;
+      dE = 0; dE_pot = 0; dE_hbond = 0; dE_tor = 0; dE_aro = 0; dE_sct = 0; dE_constraint = 0; 
 
       if (sidechain_step == 0)
 	dE_tor = torsionenergy() - prev_E_tor;
@@ -149,7 +149,14 @@ void MakeMove(Float step_size, Float use_global_bb_moves) {
 
       /* here, code used to test for rmsd */
 //	align_drms(native, native_residue, struct_native, struct_residue, map_to_seq, map_to_struct, nalign, &bb_rms);
-      dE = weight_potential*dE_pot + weight_clash*delta_nclashes + weight_hbond*dE_hbond + TOR_WEIGHT*dE_tor + ARO_WEIGHT*dE_aro + SCT_WEIGHT*dE_sct;
+      
+      
+      
+      if (strcmp(constraint_file, "None")!=0 ){ //AB
+  	dE_constraint =  Compute_constraint_energy (native_residue, native) - prev_E_constraint; //AB
+   	} //AB: Otherwise it is 0, as previously initialized
+      
+      dE = weight_potential*dE_pot + weight_clash*delta_nclashes + weight_hbond*dE_hbond + TOR_WEIGHT*dE_tor + ARO_WEIGHT*dE_aro + SCT_WEIGHT*dE_sct + dE_constraint; //AB addded last term
       double arg = dE / MC_TEMP;
     	/* wmj ****************************** */
     	
@@ -182,7 +189,7 @@ void MakeMove(Float step_size, Float use_global_bb_moves) {
       //if (arg <= 0 || threefryrand() < exp(-arg)){
       
       /*AB replaced the above with*/
-      if (acceptance_crit >=1 || threefryrand() < acceptance_crit){
+      if (acceptance_crit >=1 || threefryrand() < acceptance_crit){ //Move is accepted!
 	//if (use_yang ==1){
 	//fprintf(STATUS, "Move accepted \n");
 	//}

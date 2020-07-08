@@ -21,7 +21,7 @@ void PrintPDB(char *filename) {
     exit(1);
    }
 
-  fprintf(DATA, "REMARK E %8.3f E_pot %8.3f E_hb %8.3f E_tor %8.3f E_sct %8.3f E_aro %8.3f\n", E, E_pot, E_hbond, E_tor, E_sct, E_aro);
+  fprintf(DATA, "REMARK E %8.3f E_pot %8.3f E_hb %8.3f E_tor %8.3f E_sct %8.3f E_aro %8.3f E_constraint %8.3f \n", E, E_pot, E_hbond, E_tor, E_sct, E_aro, E_constraint);
 
   for (i=0; i<natoms; i++)
     if (strcmp(native[i].atomname, "CB") || strcmp(native[i].res, "GLY"))

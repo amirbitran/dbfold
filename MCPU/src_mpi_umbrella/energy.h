@@ -17,12 +17,18 @@ void ResetEnergies(long int check) {
   E_sct = sctenergy();
   E_aro = aromaticenergy();
   E_hbond = HydrogenBonds();
+  
+  	 if (strcmp(constraint_file, "None")!=0 ){ //AB
+  E_constraint =  Compute_constraint_energy(native_residue, native); //AB
+  }	else { //AB
+  E_constraint =0; //AB
+   } //AB
 
-  E = weight_potential*E_pot + weight_clash*nclashes + weight_hbond*E_hbond + TOR_WEIGHT*E_tor + SCT_WEIGHT*E_sct + ARO_WEIGHT*E_aro;   
+  E = weight_potential*E_pot + weight_clash*nclashes + weight_hbond*E_hbond + TOR_WEIGHT*E_tor + SCT_WEIGHT*E_sct + ARO_WEIGHT*E_aro + E_constraint;   
 
   if (abs(E - prev_E) > 1.0 && check) {
     fprintf(STATUS, "ResetEnergies(%ld): prev_E(%.5f), New E(%.5f) dE = %.5f\n", check, prev_E, E, E-prev_E);
-    fprintf(STATUS, "E_pot %.5f %.5f, E_hbond %.5f %.5f, E_tor %.5f %.5f, E_sct %.5f %.5f, E_aro %.5f %.5f\n", prev_E_pot, E_pot, prev_E_hbond, E_hbond, prev_E_tor, E_tor, prev_E_sct, E_sct, prev_E_aro, E_aro); 
+    fprintf(STATUS, "E_pot %.5f %.5f, E_hbond %.5f %.5f, E_tor %.5f %.5f, E_sct %.5f %.5f, E_aro %.5f %.5f E_constraint %.5f %.5f \n", prev_E_pot, E_pot, prev_E_hbond, E_hbond, prev_E_tor, E_tor, prev_E_sct, E_sct, prev_E_aro, E_aro, prev_E_constraint, E_constraint); 
   }
 
   prev_E_pot = E_pot;
@@ -30,6 +36,8 @@ void ResetEnergies(long int check) {
   prev_E_sct = E_sct;
   prev_E_aro = E_aro;
   prev_E_hbond = E_hbond;
+  
+  prev_E_constraint = E_constraint; //AB
 
   prev_E = E;
 }
