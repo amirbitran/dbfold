@@ -194,6 +194,7 @@ class Protein():
         dived by that same average distance in the native file such that a substructure is considered formed
         
         We set it here and then always use this same value for consistency
+        
         """
         self.f=f
     
@@ -201,6 +202,9 @@ class Protein():
         """
         See folding_rates.runHMM for description of all parameters
         setting starting_state = 'folded' will cause the starting_state variable to resort to the topological config in which all substructures are formed
+        
+        The starting state can either be a single state, or a list of multiple starting states (e.g. ['a', 'ab']) in which case,
+        HMM assumes uniform prior probability over the possible startin gstates
         """
         if not hasattr(self, 'unfolding_path'):
             if len(unfolding_dir)==0:
@@ -209,6 +213,9 @@ class Protein():
                 self.set_unfolding_path(unfolding_dir, score_filename = score_filename)
             
         if starting_state=='folded': starting_state = self.folded_state
+        if type(starting_state)==str:
+            starting_state=[starting_state]
+            
         print("The following parameters will be used to run HMM: \n f = {} \n s = {} \n m = {} \n starting_state = {} ".format(self.f,s, m,starting_state))
 
         unique_labels, distance, state_trajs, key, PDB_files = folding_rates.runHMM(self.unfolding_scorepath, self.f,s, m,starting_state, plot = True)

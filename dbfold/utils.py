@@ -51,7 +51,15 @@ def connect_tops(a, b):
     else:
         return False
     
+  
+def double_exp_decay(t, lamb1, lamb2, a1, a2):
+    return a1*np.exp(-lamb1*t)+ a2*np.exp(-lamb2*t)
     
+
+def exp_decay(t, lamb):
+    return np.exp(-lamb*t)
+
+
     
 
 def filter_nans(sim_labels, mode='prev'):

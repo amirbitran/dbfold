@@ -167,7 +167,7 @@ def nonnative_substructures(nonnatives_path, native_file, d_cutoff=6.5, filter_d
 
 
 
-def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_separation = 8, cmap='Greys', Return = False, cbar = True, filter_natives = True, filter_distance = 2, vmax = 1, alpha = 1,custom_filter = None, ax=None, labelsize = 40):
+def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_separation = 8, cmap='Greys', Return_im = False, Return_mean = False, cbar = True, filter_natives = True, filter_distance = 2, vmax = 1, alpha = 1,custom_filter = None, ax=None, labelsize = 40):
     """
     Reads a file of the form Distance_maps.dat and makes a contact map of nonnative contacts with shading according to frequency with whcih 
     that contact is observed
@@ -253,4 +253,8 @@ def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_sep
     
     ax.plot(np.arange(0, len(mean_nonnatives)), np.arange(0, len(mean_nonnatives)), color='gray', linestyle=':'  ) #added 1/10/19
         
-    if Return: return im
+    if Return_im: 
+        return im
+    elif Return_mean:
+        return mean_nonnatives
+    

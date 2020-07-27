@@ -7,13 +7,11 @@ Created on Wed Apr 22 14:24:08 2020
 """
 
 
-
 import hmmlearn
-from hmmlearn.hmm import MultinomialHMM 
+from hmmlearn.hmm import MultinomialHMM   #this one is used, do not delete!
+
 import numpy as np
 
-import itertools
-from itertools import product
 import copy as cp
 import matplotlib.pyplot as plt
 import dbfold.utils as utils
@@ -22,10 +20,7 @@ import dbfold.compute_PMF as compute_PMF
 import natsort
 
 import scipy
-from scipy import spatial
-from scipy import optimize
 
-import fnmatch
 import joblib
 
 def all_folding_rates(Arrhenius_temps, transitions_of_interest, data, clusters, PDB_files,  protein, unique_tops, top_free_energies, eq_temperatures,  Ntrials,  min_trans):
@@ -116,7 +111,7 @@ def Arrhenius_fit(temperatures, transitions_of_interest, data, PDB_files, protei
     ax.tick_params(axis='both', which='major', labelsize=labelsize, pad=8) 
 
     #now, we loop through all transitions and compute their Arrhenius plots 
-    n=0   
+    zzz=0   
     for i in range(n_clusters):
         for j in range(n_clusters):      
             current_rates=mean_transition_rates[i,j,:]
@@ -128,6 +123,7 @@ def Arrhenius_fit(temperatures, transitions_of_interest, data, PDB_files, protei
             else:
                 if (i,j) in transitions_of_interest: 
                     fit=True
+                    n = transitions_of_interest.index((i,j))
                 else:
                     fit=False            
             for k in range(len(current_rates)):
@@ -155,6 +151,8 @@ def Arrhenius_fit(temperatures, transitions_of_interest, data, PDB_files, protei
                  prefactors[i,j]=np.exp(coeffs[1])
                  print(r_value**2)
                  
+                 
+                 
 
                  if relabel_trans!=None:
                      iii = relabel_trans[n][0]
@@ -173,7 +171,7 @@ def Arrhenius_fit(temperatures, transitions_of_interest, data, PDB_files, protei
                  ax.plot([temp_norm/T for T in current_temperatures], coeffs[1]+[coeffs[0]*1/T for T in current_temperatures], color=colors[n])
                  ax.annotate('$E_A = {}$ $k_B T$'.format( round(-coeffs[0], 1) ), (1/current_temperatures[1]+0.02,  0.4+coeffs[1]+coeffs[0]*1/current_temperatures[1] ), fontsize=fontsize )
                  if show_rsquared: ax.annotate('$R^2$ = {}'.format( round( r_value**2, 3)), (1/current_temperatures[1]+0.02,  -0.05+coeffs[1]+coeffs[0]*1/current_temperatures[1] ), fontsize=fontsize )
-                 n+=1
+                 zzz+=1
                  
     if legend: ax.legend(fontsize=legend_fontsize, loc=legend_loc) 
 
@@ -364,6 +362,58 @@ def cluster(T_A, unique_labels, distance, S, key):
         curr_clus = utils.barcodes_to_labels(curr_clus)
         Clusters.append(curr_clus)
     return X, Clusters
+
+
+def compute_cluster_survival(i,times, sim_labels, min_length = 50, fit = 'Single'):
+    """"
+    Simply computes probability of surviving in cluster i
+    
+    sim_labels should be your data (cluster occupancy over time) in an array where each row is an independent trajectory and each column is a time
+    
+    min_length tells you we're only gonna keep sub_trajectories whose length is at least that length 
+    
+    fit can be 'Single' or 'Double' for single or double exponential fit, respectively
+    
+    """
+    sub_trajectories=[]   #List of all trajectories, truncated at early times until the first instance of cluster i
+    for k, trajec in enumerate(sim_labels):
+        traj=cp.deepcopy(trajec)
+        if i in traj:
+            traj=traj[np.min(np.where( traj==i ) [0]):-1 ]  #Truncate the beginning of the  trajectory before cluster i is reached for the first time
+         
+            if len(traj)>=min_length:
+                sub_trajectories.append(traj)
+    
+    #Find shortest common length among all trajectories we've kept
+    N=len(sub_trajectories)  #how many trajectories go into rate calculation for this temperature?
+    if N>0:
+        largest_common_length=min(len(T) for T in sub_trajectories) #largest length that is shared by all subtrajectories. Ex. if the subtrajectories are [[1,1,2,2] , [1,1,2]], largest_common_length is 3 
+        sub_trajectories=[T[0:largest_common_length] for T in sub_trajectories]
+
+        sub_trajectories=np.array(sub_trajectories) #we can convert to np array since all subtrajectories now have the same length
+
+        survival_probability=[ len(np.where(sub_trajectories[:,t]==i)[0])/np.shape(sub_trajectories)[0] for t in range(np.shape(sub_trajectories)[1])  ]
+        
+        times=times[0:len(survival_probability)]     
+        
+        
+        if survival_probability[1]!=0 and survival_probability[-1]!=1:       #if survival probability immediately drops from 1 to 0, we cannnot solve for lambda MLE.  Similarly, we can't do this if transition never happens (so survival probability is always 1). Otherwise we can 
+            if fit == 'Single':
+                params,b=scipy.optimize.curve_fit(utils.exp_decay, times, survival_probability, p0=0.0000001 )
+
+            else:
+                params, b = scipy.optimize.curve_fit(utils.double_exp_decay, times, survival_probability, p0=[0.0000001, 0.0000001, 1, 1], bounds = ([0,0, -np.inf, -np.inf], [np.inf,np.inf,np.inf,np.inf]) )
+            
+        else:
+            params=[np.nan]
+    
+    else: 
+        params=[np.nan]
+        survival_probability=[]
+    
+    #if lamb_MLE<0: lamb_MLE=np.nan
+        
+    return params, survival_probability, times, N
 
 
 
@@ -598,6 +648,51 @@ def markov_transmat(temp, data, PDB_files,  sim_labels=[]):
 
     
 
+def plot_cluster_survival(temp, clusters, data, PDB_files, protein,  fit = 'Single', ax = None,  fontsize = 20, labelsize = 20, legend_loc='upper right', min_length = 50, legend = True,colors = ['blue', 'orange', 'green', 'red', 'magenta', 'black','yellow', 'cyan' ], Labels = []):
+    """
+    Plots probability over time of surviving in each cluser within a provided list clusters
+    clusters is a list of cluster numbers for which you want to plot survival probs
+    fit can be 'Single' or 'Double' for single or double exponential fit, respectively
+    
+    """
+    if ax == None:
+        fig, ax = plt.subplots()
+
+    for nn, i in enumerate(clusters):
+        times, labels=predict_unfolding_at_temperature(temp, data, PDB_files,)
+        params, survival_probability, t, N=compute_cluster_survival(i,times, labels, min_length = min_length, fit = fit) 
+        #print(N)
+        
+        if fit == 'Single':
+            lamb_MLE=params[0]
+            print('$\lambda_1$ = {}'.format(lamb_MLE))
+            ax.scatter(t, survival_probability, color = colors[nn] )
+            if len(Labels)==0:
+                label = 'Cluster {}'.format(i)
+            else:
+                label = Labels[nn]
+            ax.plot(t, np.exp(-lamb_MLE*np.array(t)), label=label, color = colors[nn] )
+        else:
+            [lamb1, lamb2, a1, a2] = params
+            print('$\lambda_1$ = {} \n $\lambda_2$ = {}'.format(lamb1, lamb2))
+            ax.scatter(t, survival_probability, color = colors[nn] )
+            if len(Labels)==0:
+                label = 'Cluster {}'.format(i)
+            else:
+                label = Labels[nn]
+            ax.plot(t, a1*np.exp(-lamb1*np.array(t)) + a2*np.exp(-lamb2*np.array(t)), label=label, color = colors[nn] )
+            
+        
+        #plt.title('Survival probability for cluster {}'.format(i), fontsize=32, y=1.03)
+        #plt.annotate('T={}'.format(temp), (len(t)/2, 0.6), fontsize=30)
+        #exp=np.int(np.floor(np.log10(lamb_MLE)))
+        #factor=np.round(lamb_MLE/10**exp, 1)
+            #plt.annotate('$\lambda$ = {}*10^{}'.format(factor, exp), (t[int(3*len(t)/4)], np.exp(-lamb_MLE*t[int(3*len(t)/4)] ) ), fontsize=30)
+    #ax.yticks(np.arange(0, 1.01, 0.2))
+    ax.set_xlabel('MC Step', fontsize=fontsize)
+    ax.set_ylabel('Survival probability', fontsize = fontsize)
+    if legend: ax.legend(fontsize=fontsize, loc=legend_loc)
+    ax.tick_params(axis='both', which='major', labelsize=labelsize, pad=2) 
 
 
 
@@ -738,6 +833,17 @@ def plot_folding_rates(folding_info_path, titlename, full_protein_transitions, l
         ax.set_ylim(ymin=ymin)     
 
 
+def plot_unfolding_trajectory(traj, labels, PDB_files):
+    f, l = utils.get_trajectory(labels, PDB_files, traj)
+    #if filter_osc==True: l=filter_oscillations(l, thresh=thresh)
+    plt.figure()
+    plt.plot(utils.get_times(f),l)
+    
+    unique=list(set(labels))
+    if np.nan in unique: unique.remove(np.nan)
+    #plt.ylim((np.min(unique)-0.1, np.max(unique)+0.1))
+
+
 def predict_unfolding_at_temperature(temp, data, PDB_files):
     """
     Function to predict lables for all trajectoires at a given temperature
@@ -813,7 +919,7 @@ def rates_from_transmat(transmat, dt):
                 
 
 
-def runHMM(score_path, f,s, m,starting_state, plot = True):
+def runHMM(score_path, f,s, m,starting_states, plot = True):
     """
     Parameters are as follows:
         score_path: Path to unfolding simulation substructure scores
@@ -823,20 +929,7 @@ def runHMM(score_path, f,s, m,starting_state, plot = True):
         starting_state: topological configuraiton of starting state
     
     By the end, all trajectories are fit to HMM, and we can generate a plot of pairwise kinetic distances between states, if we wish
-    """
-    #req_frac=1-s
-    #protein='1igd'
-    #directory = 'Uunfolding2'
-    #d_thresh=1.7
-    #error_prob=0.02  #usually 0.1  
-    
-    #thresh=100
-        
-    #starting_state = 'abcd'
-    
-    #score_file='Substructure_scores.dat'
-    
-    
+    """    
     print('Loading scores...')
     scores, PDB_files, Substructures=load_data.load_scores(score_path, f, convert_to_binary=True )
     
@@ -846,21 +939,32 @@ def runHMM(score_path, f,s, m,starting_state, plot = True):
     
     alphabet = 'abcdefghijklmnopqrstuvwxyz' #passed Kindergarden
     NN = len(key[0]) 
-    ss = ''
-    for n in range(NN):
-        if alphabet[n] in starting_state:
-            ss= '{}{}'.format(ss, (int(1)))
-        else:
-            ss= '{}{}'.format(ss, (int(0)))
     
-    starting_state = np.where(np.array(key)==ss)[0][0]
+    start_states=[]
     
+    for starting_state in starting_states:
+        ss = ''
+        for n in range(NN):
+            if alphabet[n] in starting_state:
+                ss= '{}{}'.format(ss, (int(1)))
+            else:
+                ss= '{}{}'.format(ss, (int(0)))
+        
+        start_states.append(np.where(np.array(key)==ss)[0][0])
+        
+    
+    start_states = np.array(start_states)
     
     times=np.array(utils.get_times(PDB_files))
     zero_times=np.where(times==0)[0]
+    
+    #print('Zero times: {}'.format(zero_times))
+    
     lengths=[zero_times[t+1]-zero_times[t] for t in range(len(zero_times)-1)]
     lengths.append(200) #need to include the last trajectory
     lengths=np.array(lengths)
+    
+    
     
     
     for i, t in enumerate(zero_times):
@@ -874,8 +978,12 @@ def runHMM(score_path, f,s, m,starting_state, plot = True):
     Nlabels=len(unique_labels)
     
     
+    P0_val=1/len(start_states)
+    
     start_prob=np.zeros(Nlabels)    
-    start_prob[starting_state]=1
+    start_prob[start_states]=P0_val
+    
+    print('The start_prob array is {} \n'.format(start_prob))
     
     #Prepare the emission and starting probabilities 
     
