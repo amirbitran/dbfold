@@ -268,6 +268,7 @@ constraint file. The disulfide bond is assigned an energy that depends on the
 distance between the cysteine's alpha carbons in accordance to a Morse-like potential,
 multiplied by the weight of the i,j disulfide (specified in the constraint file)
 and by the value of K_CONSTRAINT
+These i and j should be specified in zero-indexing
 
 A note on weights: If all disulfide bonds are to be weighted equally, then set
 the weight to 1 for all pairs. If you want any to contribute more to the energy,
