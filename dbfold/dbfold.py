@@ -89,7 +89,7 @@ class Protein():
         return coords
         
         
-    def obtain_folding_rates(self, Arrhenius_temps = [], unfolding_transitions_of_interest = [], N_trials=1000, min_trans = 5, overwrite = False ):
+    def obtain_folding_rates(self, Arrhenius_temps = [], unfolding_transitions_of_interest = [], N_trials=1000, min_trans = 5, overwrite = False, output_filename='Folding_info.dat' ):
         """
         Computes folding rate and error distribution (due to sampling noise in unfolding simulation) from detailed balance
         If overwrite is True, then we recompute the folding rates from scratch even if we have already computed them before, and no previous info remains
@@ -121,12 +121,12 @@ class Protein():
                              'substructures': self.substructures,
                              'combined unfolding trajs': data,
                              'clusters_dic': self.temp_unfolding_info['clusters dic']})
-            joblib.dump(folding_info, '{}/Folding_info.dat'.format(self.eq_dir))
+            joblib.dump(folding_info, '{}/{}'.format(self.eq_dir, output_filename))
         
         self.folding_info = folding_info
 
 
-    def obtain_PMFs(self, eq_step=0,  k_bias = 0.02, overwrite = False, eq_dir = '', log_data_filename = 'Equilibrium_log_data.dat', score_filename = 'Equilibrium_scores.dat'):
+    def obtain_PMFs(self, eq_step=0,  k_bias = 0.02, overwrite = False, eq_dir = '', log_data_filename = 'Equilibrium_log_data.dat', score_filename = 'Equilibrium_scores.dat', output_filename='PMFS.dat'):
         """
         Computes potentials of mean force as a function of native contacts and also topological configuration
         
@@ -179,7 +179,7 @@ class Protein():
                "substructures": substructures}
         
             
-            joblib.dump(PMF_info, '{}/PMFs.dat'.format(self.eq_dir))
+            joblib.dump(PMF_info, '{}/{}'.format(self.eq_dir, output_filename))
         
         self.PMF_info = PMF_info
 
@@ -243,7 +243,7 @@ class Protein():
         self.unfolding_scorepath = '{}/{}'.format(unfolding_dir, score_filename)
         print('The unfolding path has been set as {}'.format(self.unfolding_scorepath))
         
-    def update_folding_rates(self, Arrhenius_temps, unfolding_transitions_of_interest,clusters_to_replace, N_trials=1000, min_trans = 5 ):
+    def update_folding_rates(self, Arrhenius_temps, unfolding_transitions_of_interest,clusters_to_replace, N_trials=1000, min_trans = 5, output_filename='Folding_info.dat' ):
         """
         Does a new folding rate calculation using the currently stored in tedmp_unfolding_info, assuming some folding rates had already been computed
         In general, the cluster numbering, and the identity of the clusters, may be different in this new unfolding info
@@ -403,7 +403,7 @@ class Protein():
         self.folding_info['clusters_dic'] = clusters_dic
         
 
-        joblib.dump(self.folding_info, '{}/Folding_info.dat'.format(self.eq_dir))
+        joblib.dump(self.folding_info, '{}/{}'.format(self.eq_dir, output_filename))
         
         
         

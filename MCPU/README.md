@@ -26,6 +26,9 @@ NOTE: At the moment, this code works for PDB files with up to 8000 atoms and
 1000 residues. To increase this, change the values for MAX_ATPMS and MAXSEQUENCE, 
 respectively, in define.h and recompile
 
+
+
+
 					Directories
 											
 1. mcpu_prep - the directory containing the code to create input files
@@ -240,6 +243,40 @@ The following are weights for different energy terms (see publications [1], [3])
 	ARO_WEIGHT -- relative orientations of aromatic residues
 
 
+
+-------------------
+
+NEW FEATURE: DISULFIDE CONSTRAINTS: Allows you to emulate the effect of disulfide bonds
+To use this feature, you must specify two additional parameters in your cfg file:
+
+1. A K_CONSTRAINT value, which sets the overall energy scale for disulfides
+
+2. An additional input file under the variable  CONSTRAINT_FILE, which specifies the pairs
+of cysteines that are allowed to form disulfides, as well as the weight assigned to each 
+pair (see below). 
+
+Each line in the CONSTRAINT_FILE specifies one allowed pair of disulfides (first two 
+ entires) as well as that pair of disulfide's weight (third entry). As an example 
+ constraint file, see CovidSpike_constraint.txt which lists out all possible disulfide 
+ bonds bewteen cysteinesin the receptor binding domain of SARS-CoV-2 (amino acid 319 in 
+ the S1 chain has been relabeled as 1), and assigns them all equal weights
+ 
+The constraint energy is computed as follows. For every cysteine i, we form a disulfide 
+bond with whichever cysteine j it is closest in space to, so long as cysteine j is not 
+already engaged in a disulfide bond and so long as the i,j pair is present in the 
+constraint file. The disulfide bond is assigned an energy that depends on the 
+distance between the cysteine's alpha carbons in accordance to a Morse-like potential,
+multiplied by the weight of the i,j disulfide (specified in the constraint file)
+and by the value of K_CONSTRAINT
+
+A note on weights: If all disulfide bonds are to be weighted equally, then set
+the weight to 1 for all pairs. If you want any to contribute more to the energy,
+set its weight to something greater than one. A weight less than one will likewise 
+decrease the energy contribution due to that disulfide
+
+------
+
+
 4. Compile (if necessary) and run
 If it is necessary to re-compile the code, one can do so from src_mpi_umbrella directory
  by simply typing ./compile (which runs the commands  
@@ -254,6 +291,11 @@ mpiexec -n <# of procs> ./fold_potential_mpi <cfg filename>
 MCPU produces log files, which contain energy, number of native contacts, total number
 of contacts (not typically analyzed), and RMSD as a function of MC step. Likewise,
 PDB files are produced. Data from both filetypes can be analyzed using dbfold
+
+
+
+
+
 
 
 Publications:
