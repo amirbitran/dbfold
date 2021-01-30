@@ -12,7 +12,7 @@ void MakeMove(Float, Float);
 
 
 void MakeMove(Float step_size, Float use_global_bb_moves) {
-  
+  int kkk;
   int reject, del, N, M, i;
   sidechain_step = 0;
   int use_yang = 0;
@@ -196,6 +196,9 @@ void MakeMove(Float step_size, Float use_global_bb_moves) {
 	
 	//end AB
 	Update();
+	for (kkk=0; kkk<N_constraints; kkk++){
+  	disulfide_pairs[kkk]=disulfide_pairs_attempt[kkk];
+  	}
 	natives=new_natives;
         //fprintf(STATUS, "Updated ...\n");
         //ResetEnergies();

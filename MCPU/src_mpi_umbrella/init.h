@@ -1610,6 +1610,9 @@ void SetProgramOptions(int argc, char *argv[]) {
   
   fprintf(STATUS, "myrank : %4d, cfg_file : %s\n k_bias : %5.3f\n setpoint : %d\n ", myrank, cfg_file, k_bias, number_of_contacts_setpoint);
   fflush(STATUS);
+  
+  
+
 
   if (find_yang_move == 0) {
     fprintf(STATUS, "There is nothing on YANG_MOVE!\n");

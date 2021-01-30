@@ -24,6 +24,7 @@ void SetupMatrixStuff(void) {
 
 void Fold(void) {
   int i;
+  int kkk;
 
   int irep;
   int itmp;
@@ -39,6 +40,7 @@ void Fold(void) {
   float E_aro_now = 0.0;
   float E_hbond_now = 0.0;
   float E_constraint_now = 0.0; //AB
+  disulfide_pairs = (int*)calloc(N_constraints,sizeof(int));
 
   /* rmsd by jyang */
 
@@ -118,6 +120,11 @@ void Fold(void) {
   Emin_sct = prev_E_sct;
   Emin_aro = prev_E_aro;
   Emin_constraint = prev_E_constraint;
+  
+  for (kkk=0; kkk<N_constraints; kkk++){
+  disulfide_pairs[kkk]=disulfide_pairs_attempt[kkk];
+  }
+  
   fprintf(STATUS, "ENERGY = %.2f(clashes) + %.2f(rmsd) + %.2f(potential) + %.2f(Aro) + %.2f(hbond) + %.2f(tor) + %.2f(sct)\n\n",
     weight_clash, weight_rms, weight_potential, ARO_WEIGHT, weight_hbond, TOR_WEIGHT, SCT_WEIGHT);
   for (i=0; i<natoms; i++) {
@@ -327,15 +334,25 @@ void Fold(void) {
       
       
       
-     fprintf(STATUS,"STEP %10ld  %8.2f %6d %5.2f %d %9.2f %9.2f %9.2f    %6.2f %8.2f %6.2f %6.2f %6.2f %6.3f, %d %6.3f %6.3f \n", 
+     fprintf(STATUS,"STEP %10ld  %8.2f %6d %5.2f %d %9.2f %9.2f %9.2f    %6.2f %8.2f %6.2f %6.2f %6.2f %6.3f, %d %6.3f  \n", 
 	      mcstep, E, ncontacts, native_rms,
 	      natives,
 	      E_pot_now, E_sct_now, E_hbond_now, E_aro_now, E_tor_now,
 	      100*(Float)naccepted/(Float)MC_PRINT_STEPS,
 	      100*(Float)nrejected/(Float)MC_PRINT_STEPS,
 	      100*(Float)nothers/(Float)MC_PRINT_STEPS,
-	      MC_TEMP, number_of_contacts_setpoint, E_constraint_now, mean_constraint_distance); 
+	      MC_TEMP, number_of_contacts_setpoint, E_constraint_now); 
       fflush(STATUS);
+      
+      
+      fprintf(STATUS, "The disulfide pairs are, in zero indexing: \t");
+      for (kkk=0; kkk<N_constraints; kkk++){
+      if (disulfide_pairs_attempt[kkk]==1){
+      	fprintf(STATUS, "%i and %i \t", constraint_array[kkk][0],constraint_array[kkk][1]);
+      } 
+  	  }
+  	  fprintf(STATUS, "\n");
+      
       n_sidechain_accepted = 0;
       naccepted = 0;
       nrejected = 0;

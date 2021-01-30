@@ -62,7 +62,13 @@ struct contact_data {
 int Max_N_constraints = 1000;
 int N_constraints;
 int **constraint_array; //We will declare a pointer to an array of Max_N_constraints pointers to ints...the ** indicates pointer to a pointer
+
+float *distances; //A pointer to an array of N_constraints distances	
+
+
 float *constraint_weights; //A pointer to an array
+int *disulfide_pairs_attempt; //The nth element will tell you whether the pair of residues indicated by the nth constraint is involved in a disulfide bond in the proposed configuration 
+int *disulfide_pairs; //The nth element will tell you whether the pair of residues indicated by the nth constraint is involved in a disulfide bond in the currently accepted configuration
 char constraint_file[500] = "None";
 float k_constraint=0;
 float E_constraint;
@@ -70,6 +76,12 @@ float prev_E_constraint;
 float dE_constraint;
 //float E_constraint_now;
 float mean_constraint_distance = 0; 
+
+
+
+
+
+//int max_N_cysteines=100; //Ideally would figure out the number of cysteines by getting the number of unique residues in the cons traints list..for now assume no more than 100
 
 /* hydrogen bonding */
 struct hydrogen_bond {
