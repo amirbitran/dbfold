@@ -75,7 +75,10 @@ def plot_1D_PMF(paths, temps_to_plot,  xlabel='Number of native contacts',legend
     plt.figure()
     colors = ['r', 'b', 'g', 'm', 'k', 'y' ,'c']
     for ppp, path in enumerate(paths):
-        [bin_centers, free_energies, temperatures] = joblib.load(path)
+        PMF_info = joblib.load(path)
+        bin_centers = PMF_info['native values']
+        free_energies = PMF_info['native free energies']
+        temperatures = PMF_info['eq temps']
         if errorbar and len(np.shape(free_energies)) <3: print('WARNING!!!: uncertainties in free energies were not computed or not saved for path {}!'.format(path))
         if len(np.shape(free_energies))>2:
             uncertainties = free_energies[:,:,1]
