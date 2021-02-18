@@ -24,7 +24,7 @@ parser.add_argument("--variables", default = "natives,energy,rmsd", type = str, 
 parser.add_argument("--step_multiples", default = "1", type = str, help = "Read only MC steps that are a multiple of this")
 parser.add_argument("--min_step", default = '0', help = 'minimum MC step to analyze. Defaults to 0.')
 parser.add_argument("--max_step", default = 'inf', help = 'maximum MC step to analyze. Defaults to infinity.')
-parser.add_argument("--output_filename", default = "Equilibium_scores.dat", help = "A file with this name, which contains the log file data, will be saved in directory. Defaults to Equilibrium_scores.dat ")
+parser.add_argument("--output_filename", default = "Equilibrium_log_data.dat", help = "A file with this name, which contains the log file data, will be saved in directory. Defaults to Equilibrium_log_data.dat ")
 
 
 args = parser.parse_args()

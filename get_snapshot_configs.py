@@ -53,7 +53,7 @@ parser.add_argument("--max_step", default = 'inf', help = 'maximum MC step to an
 
 parser.add_argument("--temperatures", default = "*.***", type = str, help = "Temperatures at which you want to run analysis, as a comma-separated string. For instnace you can type --temperatures='0.800, 0.900' or --temperatures = '0.8**' or --temperatures='*.***', the latter being the default ")
 
-parser.add_argument("--output_filename", default = "Substructure_scores.dat", help = "A file with this name, which contains scores for all snapshots, will be saved in directory. Defaults to Substructure_scores.dat ")
+parser.add_argument("--output_filename", default = "Equilibrium_scores.dat", help = "A file with this name, which contains scores for all snapshots, will be saved in directory. Defaults to Equilibrium_scores.dat ")
 
 args = parser.parse_args()
 
