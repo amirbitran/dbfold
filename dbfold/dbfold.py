@@ -126,7 +126,7 @@ class Protein():
         self.folding_info = folding_info
 
 
-    def obtain_PMFs(self, eq_step=0,  k_bias = 0.02, overwrite = False, eq_dir = '', log_data_filename = 'Equilibrium_log_data.dat', score_filename = 'Equilibrium_scores.dat', output_filename='PMFS.dat'):
+    def obtain_PMFs(self, eq_step=0,  k_bias = 0.02, overwrite = False, eq_dir = '', log_data_filename = 'Equilibrium_log_data.dat', score_filename = 'Equilibrium_scores.dat', output_filename='PMFs.dat'):
         """
         Computes potentials of mean force as a function of native contacts and also topological configuration
         
