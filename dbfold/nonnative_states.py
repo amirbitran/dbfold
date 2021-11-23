@@ -13,6 +13,8 @@ import matplotlib.cm as cm
 import dbfold.analyze_structures as analyze_structures
 import dbfold.utils as utils
 import copy as cp
+import scipy
+from scipy import signal
 
 
 
@@ -167,7 +169,7 @@ def nonnative_substructures(nonnatives_path, native_file, d_cutoff=6.5, filter_d
 
 
 
-def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_separation = 8, cmap='Greys', Return_im = False, Return_mean = False, cbar = True, filter_natives = True, filter_distance = 2, vmax = 1, alpha = 1,custom_filter = None, ax=None, labelsize = 40):
+def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_separation = 8, cmap='Greys', Return_im = False, min_freq = 0, Return_mean = False, cbar = True, filter_natives = True, filter_distance = 2, vmax = 1, alpha = 1,custom_filter = None, ax=None, labelsize = 40):
     """
     Reads a file of the form Distance_maps.dat and makes a contact map of nonnative contacts with shading according to frequency with whcih 
     that contact is observed
@@ -183,6 +185,7 @@ def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_sep
     
     By the way, the variable vmax says what is the strongest value in the colorbar
     By default, it's 1, but you can also set it to None in which case it becomes the maximum value in the map
+    min_freq gives the minimum freqeuncy with which nonnative contacts should appear for you to plot them..by default this is 0
     """
     
     native_contacts = analyze_structures.find_native_contacts(native_file, d_cutoff, min_seq_separation)
@@ -194,6 +197,8 @@ def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_sep
     
     
     mean_nonnatives=np.mean(distance_maps, axis=2)
+    mean_nonnatives[np.where(mean_nonnatives<min_freq)]=0
+    
     #NN = np.shape(mean_nonnatives)[0]
     
     if filter_natives or np.shape(custom_filter)!=():
@@ -240,10 +245,10 @@ def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_sep
         fig, ax = plt.subplots()
     if cmap!=None:
         #im = ax.imshow(mean_nonnatives, cmap=cmap, norm = normalize, alpha = alpha, origin = 'lower')
-        im = ax.imshow(mean_nonnatives + np.transpose(mean_nonnatives), cmap=cmap, norm = normalize, alpha = alpha, origin = 'upper') #changed to this on 1/10/19
+        im = ax.imshow(mean_nonnatives + np.transpose(mean_nonnatives), cmap=cmap, norm = normalize, alpha = alpha, origin = 'upper', extent = [1, len(mean_nonnatives)+1,len(mean_nonnatives)+1,1]) #changed to this on 1/10/19
     else:
         #im = ax.imshow(mean_nonnatives, norm = normalize, alpha = alpha, origin = 'lower')
-        im = ax.imshow(mean_nonnatives + np.transpose(mean_nonnatives), norm = normalize, alpha = alpha, origin = 'upper') #changed to this on 1/10/19
+        im = ax.imshow(mean_nonnatives + np.transpose(mean_nonnatives), norm = normalize, alpha = alpha, origin = 'upper',  extent = [1, len(mean_nonnatives)+1,len(mean_nonnatives)+1,1]) #changed to this on 1/10/19
     #im.set_clim((0, vmax))
     
     if cbar:
@@ -251,10 +256,145 @@ def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, min_seq_sep
         cbar.ax.tick_params(labelsize=labelsize) 
     ax.tick_params(labelsize=labelsize)
     
-    ax.plot(np.arange(0, len(mean_nonnatives)), np.arange(0, len(mean_nonnatives)), color='gray', linestyle=':'  ) #added 1/10/19
+    ax.plot(np.arange(1, len(mean_nonnatives)+1), np.arange(1, len(mean_nonnatives)+1), color='gray', linestyle=':'  ) #added 1/10/19
         
     if Return_im: 
         return im
     elif Return_mean:
         return mean_nonnatives
+    
+def mean_nonnatives_per_residue(nonnatives_path, native_file, d_cutoff=6.5, min_seq_separation = 8, filter_natives = True, filter_distance = 2,custom_filter=None,  ax=None, labelsize = 40, peak_label=True):
+    """
+    Reads a file of the form Distance_maps.dat and computes the average # of nonnative contacts that each residue participates in, averaged over all snapshots
+    """
+    
+    native_contacts = analyze_structures.find_native_contacts(native_file, d_cutoff, min_seq_separation)
+    [distance_maps, PDB_files, filescores]=joblib.load(nonnatives_path)
+
+    if np.shape(distance_maps)[2]>len(PDB_files): #there is an extra page attached to end of the distance maps that tells you mean distances between residues
+        #mean_distances = distance_maps[:,:,-1]
+        distance_maps = distance_maps[:, :, 0:-1]
+    if filter_natives or np.shape(custom_filter)!=():
+        
+        if filter_natives and np.shape(custom_filter)==():
+            Filter=cp.deepcopy(native_contacts)
+
+        elif filter_natives and np.shape(custom_filter)!=():
+            Filter = cp.deepcopy(native_contacts) + custom_filter
+            zz = np.zeros(np.shape(Filter))
+            zz[np.where(Filter>0)]=1
+            Filter = zz
+            
+        else:
+            Filter = custom_filter
+            
+        #plt.figure()
+        #plt.imshow(Filter)
+
+        for d in range(-filter_distance, filter_distance+1):  #gets rid of register-shifted native contacts
+            
+            im1_to_add=np.roll(Filter, d, axis=1)
+            if d<0:
+                im1_to_add[:, d:]=0
+            else:
+                im1_to_add[:, 0:d]=0
+            
+            im2_to_add=np.roll(Filter, d, axis=0)
+            if d<0:
+                im2_to_add[d:,:]=0
+            else:
+                im2_to_add[0:d, :]=0
+            Filter=Filter+im1_to_add + im2_to_add
+            Filter[np.where(Filter)]=1
+    maps=np.zeros(np.shape(distance_maps))
+    Nsnaps=np.shape(maps)[2]
+    for zz in range(Nsnaps):
+        maps[:,:,zz] = np.multiply(distance_maps[:,:,zz], 1 - Filter)
+        maps[:,:,zz] = maps[:,:,zz] + np.transpose(maps[:,:,zz])
+    
+    Nresis=np.shape(maps)[0]
+    mean_n_nonnatives=np.zeros(Nresis)
+    
+    for zz in range(Nsnaps):
+        mean_n_nonnatives+=np.sum(maps[:,:,zz], axis=0)
+    mean_n_nonnatives=mean_n_nonnatives/Nsnaps
+    
+    if ax==None:
+        fig, ax = plt.subplots()
+    ax.bar(np.arange(1, Nresis+1), mean_n_nonnatives)
+    ax.set_xlabel('Residue #', fontsize=labelsize)
+    ax.set_ylabel('Mean # nonnative contacts', fontsize=labelsize)
+    ax.tick_params(labelsize=labelsize)
+    
+    if peak_label:
+        pks, prps=scipy.signal.find_peaks(mean_n_nonnatives)
+        for pk in pks:
+            ax.text(pk+1, mean_n_nonnatives[pk]+0.02, '{}'.format(pk+1))
+    return mean_n_nonnatives
+    
+    
+    
+        
+def mean_number_nonnatives(nonnatives_paths, native_files, labels, d_cutoff=6.5, min_seq_separation = 8, filter_natives = True, filter_distance = 2,custom_filter=None,  ax=None, fontsize=20, labelsize = 20):
+    """
+    Reads files of the form Distance_maps.dat and for each computes average # of nonnative contacts, averaged over all snapshots
+    """
+    if ax==None:
+        fig, ax = plt.subplots()
+    means=[]
+    for n,nonnatives_path in enumerate(nonnatives_paths):
+        native_contacts = analyze_structures.find_native_contacts(native_files[n], d_cutoff, min_seq_separation)
+        [distance_maps, PDB_files, filescores]=joblib.load(nonnatives_path)
+    
+        if np.shape(distance_maps)[2]>len(PDB_files): #there is an extra page attached to end of the distance maps that tells you mean distances between residues
+            #mean_distances = distance_maps[:,:,-1]
+            distance_maps = distance_maps[:, :, 0:-1]
+        if filter_natives or np.shape(custom_filter)!=():
+            
+            if filter_natives and np.shape(custom_filter)==():
+                Filter=cp.deepcopy(native_contacts)
+    
+            elif filter_natives and np.shape(custom_filter)!=():
+                Filter = cp.deepcopy(native_contacts) + custom_filter
+                zz = np.zeros(np.shape(Filter))
+                zz[np.where(Filter>0)]=1
+                Filter = zz
+                
+            else:
+                Filter = custom_filter
+                
+            #plt.figure()
+            #plt.imshow(Filter)
+    
+            for d in range(-filter_distance, filter_distance+1):  #gets rid of register-shifted native contacts
+                
+                im1_to_add=np.roll(Filter, d, axis=1)
+                if d<0:
+                    im1_to_add[:, d:]=0
+                else:
+                    im1_to_add[:, 0:d]=0
+                
+                im2_to_add=np.roll(Filter, d, axis=0)
+                if d<0:
+                    im2_to_add[d:,:]=0
+                else:
+                    im2_to_add[0:d, :]=0
+                Filter=Filter+im1_to_add + im2_to_add
+                Filter[np.where(Filter)]=1
+        maps=np.zeros(np.shape(distance_maps))
+        Nsnaps=np.shape(maps)[2]
+        n_nonnatives=[]
+        for zz in range(Nsnaps):
+            Map= np.multiply(distance_maps[:,:,zz], 1 - Filter)
+            n_nonnatives.append(np.sum(np.sum(Map)))
+        means.append(np.mean(n_nonnatives))
+    ax.bar(np.arange(len(labels)), means, tick_label=labels)
+    ax.set_xlabel('Mutant', fontsize=fontsize)
+    ax.set_ylabel('Average # nonnatives', fontsize=fontsize)
+    ax.tick_params(labelsize=labelsize)
+            
+            #maps[:,:,zz] = maps[:,:,zz] + np.transpose(maps[:,:,zz])
+        
+        
+    
     

@@ -301,7 +301,7 @@ PDB files are produced. Data from both filetypes can be analyzed using dbfold
 
 Publications:
 [1] J.S. Yang et al., Structure 15, 53 (2007)
-[2] J. Tian et al., PLOS Comp. Bio., in press
+[2] J. Tian et al., PLOS Comp. Bio. 11(4) (2015)
 [3] J. Xu, L. Huang, E. I. Shakhnovich, Proteins 79, 1704 (2011)
 [4] W. Chen, J.S. Yang, E. I. Shakhnovich, Proteins 66, 682 (2007)
 [5] A. Bitran, W. M. Jacobs, X. Zhai, E. I Shakhnovich, PNAS (2020)

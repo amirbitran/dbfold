@@ -9,6 +9,8 @@ import dbfold.load_data as load_data
 import dbfold.analyze_structures as analyze_structures
 import dbfold.compute_PMF as compute_PMF
 import dbfold.folding_rates as folding_rates
+import dbfold.nonnative_states as nonnative_states
+
 import os.path
 import joblib
 import numpy as np

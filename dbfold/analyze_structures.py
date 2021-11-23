@@ -309,104 +309,106 @@ def score_snapshot(snapshot, substructures, atom='CA', min_seq_separation=8 ):
     return scores, distances
 
 
-def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, cmap='Greys', Return = False, cbar = True, filter_natives = True, filter_distance = 2, vmax = 1, alpha = 1,custom_filter = None, ax=None, labelsize = 40):
-    """
-    Reads a file of the form Distance_maps.dat and makes a contact map of nonnative contacts with shading according to frequency with whcih 
-    that contact is observed
+# def visualize_nonnatives(nonnatives_path, native_file, d_cutoff=6.5, cmap='Greys', Return = False, cbar = True, filter_natives = True, filter_distance = 2, vmax = 1, alpha = 1,custom_filter = None, ax=None, labelsize = 40):
+#     """
+#     Reads a file of the form Distance_maps.dat and makes a contact map of nonnative contacts with shading according to frequency with whcih 
+#     that contact is observed
     
-    d_cutoff is distance cutoff with which you identify NATIVE structures to subtract off from the nonnatives...sholud be
-    the same as whatever was used to identify the nonnatives
+#     d_cutoff is distance cutoff with which you identify NATIVE structures to subtract off from the nonnatives...sholud be
+#     the same as whatever was used to identify the nonnatives
     
-    if filter_natives, then we ignore the native contacts, as well as a border around them given by filter_distance
-    You also have the option to enter a Custom filter, which is a matrix of 1's at positions where you want to filter out the contact map...by default this is off and set to none
-    Note that if a custom_filter is used, you still pad that filter with a border given by filter_distance
+#     if filter_natives, then we ignore the native contacts, as well as a border around them given by filter_distance
+#     You also have the option to enter a Custom filter, which is a matrix of 1's at positions where you want to filter out the contact map...by default this is off and set to none
+#     Note that if a custom_filter is used, you still pad that filter with a border given by filter_distance
     
-    If both filter_natives is set to and and you provide a custom filter, then the two filters are used in conjunction
+#     If both filter_natives is set to and and you provide a custom filter, then the two filters are used in conjunction
     
-    By the way, the variable vmax says what is the strongest value in the colorbar
-    By default, it's 1, but you can also set it to None in which case it becomes the maximum value in the map
-    """
+#     By the way, the variable vmax says what is the strongest value in the colorbar
+#     By default, it's 1, but you can also set it to None in which case it becomes the maximum value in the map
+#     """
+#     #native_contacts = find_native_contacts(native_file, d_cutoff, min_seq_separation)
     
-    native_contacts, substructures = identify_native_substructures(native_file, d_cutoff=d_cutoff, plot=False)
-    [distance_maps, PDB_files, filescores]=joblib.load(nonnatives_path)
+#     native_contacts, substructures = identify_native_substructures(native_file, d_cutoff=d_cutoff, plot=False)
+#     [distance_maps, PDB_files, filescores]=joblib.load(nonnatives_path)
 
-    if np.shape(distance_maps)[2]>len(PDB_files): #there is an extra page attached to end of the distance maps that tells you mean distances between residues
-        mean_distances = distance_maps[:,:,-1]
-        distance_maps = distance_maps[:, :, 0:-1]
+#     if np.shape(distance_maps)[2]>len(PDB_files): #there is an extra page attached to end of the distance maps that tells you mean distances between residues
+#         mean_distances = distance_maps[:,:,-1]
+#         distance_maps = distance_maps[:, :, 0:-1]
     
     
-    mean_nonnatives=np.mean(distance_maps, axis=2)
-    NN = np.shape(mean_nonnatives)[0]
+#     mean_nonnatives=np.mean(distance_maps, axis=2)
+#     NN = np.shape(mean_nonnatives)[0]
     
-    if filter_natives or np.shape(custom_filter)!=():
+#     if filter_natives or np.shape(custom_filter)!=():
         
-        if filter_natives and np.shape(custom_filter)==():
-            Filter=cp.deepcopy(native_contacts)
-
-        elif filter_natives and np.shape(custom_filter)!=():
-            Filter = cp.deepcopy(native_contacts) + custom_filter
             zz = np.zeros(np.shape(Filter))
-            zz[np.where(Filter>0)]=1
-            Filter = zz
-            
-        else:
-            Filter = custom_filter
-            
-        #plt.figure()
-        #plt.imshow(Filter)
+#         if filter_natives and np.shape(custom_filter)==():
+#             Filter=cp.deepcopy(native_contacts)
 
-        for d in range(-filter_distance, filter_distance+1):  #gets rid of register-shifted native contacts
+#         elif filter_natives and np.shape(custom_filter)!=():
+#             Filter = cp.deepcopy(native_contacts) + custom_filter
+#             zz = np.zeros(np.shape(Filter))
+#             zz[np.where(Filter>0)]=1
+#             Filter = zz
             
-            im1_to_add=np.roll(Filter, d, axis=1)
-            if d<0:
-                im1_to_add[:, d:]=0
-            else:
-                im1_to_add[:, 0:d]=0
+#         else:
+#             Filter = custom_filter
             
-            im2_to_add=np.roll(Filter, d, axis=0)
-            if d<0:
-                im2_to_add[d:,:]=0
-            else:
-                im2_to_add[0:d, :]=0
-            Filter=Filter+im1_to_add + im2_to_add
-            Filter[np.where(Filter)]=1
-        #plt.figure()
-        #plt.imshow(Filter)
-        mean_nonnatives = np.multiply(mean_nonnatives, 1 - Filter)
+#         #plt.figure()
+#         #plt.imshow(Filter)
+
+#         for d in range(-filter_distance, filter_distance+1):  #gets rid of register-shifted native contacts
+            
+#             im1_to_add=np.roll(Filter, d, axis=1)
+#             if d<0:
+#                 im1_to_add[:, d:]=0
+#             else:
+#                 im1_to_add[:, 0:d]=0
+            
+#             im2_to_add=np.roll(Filter, d, axis=0)
+#             if d<0:
+#                 im2_to_add[d:,:]=0
+#             else:
+#                 im2_to_add[0:d, :]=0
+#             Filter=Filter+im1_to_add + im2_to_add
+#             Filter[np.where(Filter)]=1
+#         #plt.figure()
+#         #plt.imshow(Filter)
+#         mean_nonnatives = np.multiply(mean_nonnatives, 1 - Filter)
 
 
-    #if filter_natives: mean_nonnatives=np.multiply(mean_nonnatives, 1 - native_contacts)
+#     #if filter_natives: mean_nonnatives=np.multiply(mean_nonnatives, 1 - native_contacts)
     
-    #Commented all this out September 3 2019
-    #if cmap != 'Greys':
-    #    for i in range(NN):
-    #        for j in range(NN):
-    #            if mean_nonnatives[i,j]==0:
-    #                mean_nonnatives[i,j] = np.nan #makes points without any contact probability show up as white rather than peach red
+#     #Commented all this out September 3 2019
+#     #if cmap != 'Greys':
+#     #    for i in range(NN):
+#     #        for j in range(NN):
+#     #            if mean_nonnatives[i,j]==0:
+#     #                mean_nonnatives[i,j] = np.nan #makes points without any contact probability show up as white rather than peach red
     
     
-    if vmax == None:
-        vmax = np.max(mean_nonnatives)
-    normalize = cccc.Normalize(vmin = 0, vmax = vmax)
+#     if vmax == None:
+#         vmax = np.max(mean_nonnatives)
+#     normalize = cccc.Normalize(vmin = 0, vmax = vmax)
         
-    if ax == None:
-        fig, ax = plt.subplots()
-    if cmap!=None:
-        #im = ax.imshow(mean_nonnatives, cmap=cmap, norm = normalize, alpha = alpha, origin = 'lower')
-        im = ax.imshow(mean_nonnatives + np.transpose(mean_nonnatives), cmap=cmap, norm = normalize, alpha = alpha, origin = 'upper') #changed to this on 1/10/19
-    else:
-        #im = ax.imshow(mean_nonnatives, norm = normalize, alpha = alpha, origin = 'lower')
-        im = ax.imshow(mean_nonnatives + np.transpose(mean_nonnatives), norm = normalize, alpha = alpha, origin = 'upper') #changed to this on 1/10/19
-    #im.set_clim((0, vmax))
+#     if ax == None:
+#         fig, ax = plt.subplots()
+#     if cmap!=None:
+#         #im = ax.imshow(mean_nonnatives, cmap=cmap, norm = normalize, alpha = alpha, origin = 'lower')
+#         im = ax.imshow(mean_nonnatives + np.transpose(mean_nonnatives), cmap=cmap, norm = normalize, alpha = alpha, origin = 'upper') #changed to this on 1/10/19
+#     else:
+#         #im = ax.imshow(mean_nonnatives, norm = normalize, alpha = alpha, origin = 'lower')
+#         im = ax.imshow(mean_nonnatives + np.transpose(mean_nonnatives), norm = normalize, alpha = alpha, origin = 'upper') #changed to this on 1/10/19
+#     #im.set_clim((0, vmax))
     
-    if cbar:
-        cbar = plt.colorbar(im)
-        cbar.ax.tick_params(labelsize=labelsize) 
-    ax.tick_params(labelsize=labelsize)
+#     if cbar:
+#         cbar = plt.colorbar(im)
+#         cbar.ax.tick_params(labelsize=labelsize) 
+#     ax.tick_params(labelsize=labelsize)
     
-    ax.plot(np.arange(0, len(mean_nonnatives)), np.arange(0, len(mean_nonnatives)), color='gray', linestyle=':'  ) #added 1/10/19
+#     ax.plot(np.arange(0, len(mean_nonnatives)), np.arange(0, len(mean_nonnatives)), color='gray', linestyle=':'  ) #added 1/10/19
         
-    if Return: return im
+#     if Return: return im
 
 
 
